@@ -6,3 +6,13 @@
 */
 *.tar.gz
 *.md5
+cca_test
+detray_simulation
+geometries
+odd
+single_module
+tml_detector
+tml_full
+tml_pixel_barrel
+tml_pixels
+two_modules
