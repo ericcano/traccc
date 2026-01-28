@@ -31,10 +31,12 @@ traccc_add_executable( truth_fitting_example_cuda "truth_fitting_example_cuda.cp
 # Set up the "throughput applications".
 #
 add_library( traccc_examples_cuda STATIC
+   "tbb_await.hpp"
+   "tbb_await.cpp"
    "full_chain_algorithm.hpp"
    "full_chain_algorithm.cpp" )
 target_link_libraries( traccc_examples_cuda
-   PUBLIC CUDA::cudart vecmem::core vecmem::cuda detray::core detray::detectors
+   PUBLIC TBB::tbb CUDA::cudart vecmem::core vecmem::cuda detray::core detray::detectors
           traccc::core traccc::device_common traccc::cuda_utils traccc::cuda
           traccc_examples_common )
 

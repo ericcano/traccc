@@ -173,7 +173,7 @@ int throughput_mt(std::string_view description, int argc, char* argv[]) {
     // Determine the await strategy to use.
     await_strategy await_mode = await_strategy::sync;
     if (threading_opts.await_mode == opts::threading::await_strategy::suspend) {
-        await_mode = await_strategy::sync;  // Placeholder for suspension modes
+        await_mode = await_strategy::tbb_await;
     }
 
     // Set up the full-chain algorithm(s). One for each concurrent slot

@@ -9,6 +9,7 @@
 #include "full_chain_algorithm.hpp"
 
 #include "../common/await_strategy.hpp"
+#include "tbb_await.hpp"
 
 // Project include(s).
 #include "traccc/cuda/utils/algorithm_base.hpp"
@@ -38,6 +39,9 @@ await_strategy_helper::await_strategy_helper(await_strategy await_mode) {
     switch (await_mode) {
         case await_strategy::sync:
             m_await = default_await_function;
+            break;
+        case await_strategy::tbb_await:
+            m_await = tbb_await;
             break;
         default:
             throw std::invalid_argument("Unknown await strategy");
