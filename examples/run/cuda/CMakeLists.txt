@@ -33,6 +33,8 @@ traccc_add_executable( truth_fitting_example_cuda "truth_fitting_example_cuda.cp
 add_library( traccc_examples_cuda STATIC
    "tbb_await.hpp"
    "tbb_await.cpp"
+   "boost_fiber_await.hpp"
+   "boost_fiber_await.cpp"
    "full_chain_algorithm.hpp"
    "full_chain_algorithm.cpp" )
 target_link_libraries( traccc_examples_cuda
@@ -47,7 +49,7 @@ traccc_add_executable( throughput_st_cuda "throughput_st.cpp"
                   traccc::options traccc_examples_cuda )
 
 traccc_add_executable( throughput_mt_cuda "throughput_mt.cpp"
-   LINK_LIBRARIES indicators::indicators TBB::tbb vecmem::core vecmem::cuda
+   LINK_LIBRARIES indicators::indicators TBB::tbb Boost::fiber vecmem::core vecmem::cuda
                   detray::detectors detray::io traccc::io traccc::performance
                   traccc::core traccc::device_common traccc::cuda_utils traccc::cuda
                   traccc::options traccc_examples_cuda )

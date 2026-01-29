@@ -181,7 +181,7 @@ int throughput_mt(std::string_view description, int argc, char* argv[]) {
     await_strategy await_mode = await_strategy::sync;
 #ifdef TRACCC_THROUGHPUT_MT_BOOST_FIBER
     if (threading_opts.await_mode == opts::threading::await_strategy::suspend) {
-        await_mode = await_strategy::sync;  // placeholder for boost fiber await
+        await_mode = await_strategy::boost_fiber_await;
     }
 #else
     if (threading_opts.await_mode == opts::threading::await_strategy::suspend) {
