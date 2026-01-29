@@ -18,9 +18,10 @@ add_library(traccc_examples_common STATIC
    "common/throughput_st.hpp"
    "common/throughput_st.ipp"
    "common/await_strategy.hpp"
-   )
+   "common/fiber_pool.hpp"
+   "common/fiber_pool.cpp")
 target_link_libraries(traccc_examples_common
-   PUBLIC traccc::core traccc::options
+   PUBLIC traccc::core traccc::options Boost::fiber
    PRIVATE traccc::io)
 
 # Add all the subdirectories that can be built.
