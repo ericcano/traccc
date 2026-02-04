@@ -2,10 +2,19 @@
    "files.associations": {
       "*.hip": "cpp",
       "*.sycl": "cpp",
-      "*.ipp": "cpp"
+      "*.ipp": "cpp",
+      "*.cu": "cpp",
+      "*.cuh": "cpp"
    },
    "sonarlint.connectedMode.project": {
       "connectionId": "acts-project",
       "projectKey": "acts-project_traccc"
+   },
+   "search.exclude": {
+      "**/data": true,
+      "**/data/**": true
+   },
+   "files.exclude": {
+      "**/data": true
    }
 }

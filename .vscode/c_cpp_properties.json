@@ -1,0 +1,56 @@
+{
+  "configurations": [
+    {
+      "name": "Linux",
+      "includePath": [
+        "${workspaceFolder}/core/include",
+        "${workspaceFolder}/io/include",
+        "${workspaceFolder}/performance/include",
+        "${workspaceFolder}/device/common/include",
+        "${workspaceFolder}/device/cuda/include",
+        "${workspaceFolder}/device/sycl/include",
+        "${workspaceFolder}/device/kokkos/include",
+        "${workspaceFolder}/plugins/algebra/vecmem/include",
+        "${workspaceFolder}/plugins/algebra/eigen/include",
+        "${workspaceFolder}/plugins/algebra/array/include",
+        "${workspaceFolder}/plugins/algebra/smatrix/include",
+        "${workspaceFolder}/examples/options/include",
+        "/shared/sched-traccc/build/_deps/tbb-src/include",
+        "/shared/sched-traccc/build/_deps/traccc-src/core/include",
+        "/shared/sched-traccc/build/_deps/traccc-src/io/include",
+        "/shared/sched-traccc/build/_deps/traccc-src/performance/include",
+        "/shared/sched-traccc/build/_deps/traccc-src/device/common/include",
+        "/shared/sched-traccc/build/_deps/traccc-src/device/cuda/include",
+        "/shared/sched-traccc/build/_deps/traccc-src/device/sycl/include",
+        "/shared/sched-traccc/build/_deps/traccc-src/examples/options/include",
+        "/shared/sched-traccc/build/_deps/vecmem-src/core/include",
+        "/shared/sched-traccc/build/_deps/vecmem-src/cuda/include",
+        "/shared/sched-traccc/build/_deps/cccl-src/libcudacxx/include",
+        "/shared/sched-traccc/build/_deps/googletest-src/googletest/include",
+        "/shared/sched-traccc/build/_deps/benchmark-src/include",
+        "/shared/sched-traccc/build/_deps/nlohmann_json-src/include",
+        "/shared/sched-traccc/build/_deps/acts-src/Core/include",
+        "${workspaceFolder}/**"
+      ],
+      "defines": [],
+      "compilerPath": "/usr/bin/g++",
+      "cStandard": "c11",
+      "cppStandard": "c++20",
+      "intelliSenseMode": "linux-gcc-x64",
+      "browse": {
+        "path": [
+          "${workspaceFolder}/core/include",
+          "${workspaceFolder}/io/include",
+          "${workspaceFolder}/performance/include",
+          "${workspaceFolder}/device/common/include",
+          "/shared/sched-traccc/build/_deps/**",
+          "${workspaceFolder}/**"
+        ],
+        "limitSymbolsToIncludedHeaders": false,
+        "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db"
+      },
+      "compileCommands": "/shared/sched-traccc/build/compile_commands.json"
+    }
+  ],
+  "version": 4
+}
