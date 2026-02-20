@@ -473,5 +473,8 @@ if( BUILD_TESTING AND TRACCC_BUILD_TESTING )
    add_subdirectory( tests )
 endif()
 
+# Setup the benchmarks.
+add_subdirectory( extras/pixeltrack_throughput_scan )
+
 # Set up the packaging of the project.
 include( traccc-packaging )
