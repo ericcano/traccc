@@ -51,6 +51,7 @@ traccc_add_test(
     test_sanity_contiguous_on.cu
     test_sanity_ordered_on.cu
     test_sort.cu
+    test_single_thread.cpp
 
     LINK_LIBRARIES
     CUDA::cudart
@@ -69,6 +70,7 @@ traccc_add_test(
     traccc::simulation
     traccc_tests_cuda_main
     traccc_tests_common
+    TBB::tbb
 )
 
 # For CUDA 11 turn on separable compilation. This is necessary for using
