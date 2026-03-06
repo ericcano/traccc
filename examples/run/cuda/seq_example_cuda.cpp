@@ -187,7 +187,7 @@ int seq_run(const traccc::opts::detector& detector_opts,
                                        logger().clone("HostFittingAlg"));
 
     traccc::cuda::clusterization_algorithm ca_cuda(
-        mr, copy, stream, clusterization_opts,
+        mr, copy, stream, clusterization_opts, traccc::cuda::single_threaded_delegator::get(),
         logger().clone("CudaClusteringAlg"));
     traccc::cuda::measurement_sorting_algorithm ms_cuda(
         mr, copy, stream, logger().clone("CudaMeasSortingAlg"));

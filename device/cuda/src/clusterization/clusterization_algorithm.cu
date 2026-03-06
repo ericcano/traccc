@@ -24,11 +24,13 @@ namespace traccc::cuda {
 
 clusterization_algorithm::clusterization_algorithm(
     const traccc::memory_resource& mr, vecmem::copy& copy, cuda::stream& str,
-    const config_type& config, std::unique_ptr<const Logger> logger,
+    const config_type& config, single_threaded_delegator& delegator,
+    std::unique_ptr<const Logger> logger,
     await_function_t await_func)
     : device::clusterization_algorithm(mr, copy, config, std::move(logger)),
       cuda::algorithm_base(str),
-      m_await_function(await_func) {}
+      m_await_function(await_func),
+      m_delegator(delegator) {}
 
 bool clusterization_algorithm::input_is_valid(
     const edm::silicon_cell_collection::const_view& cells) const {

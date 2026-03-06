@@ -16,11 +16,19 @@
 namespace traccc::cuda {
   /// Base class for multiple implementations of a lamdba delegator.
   ///
-  /// Main implementation takes a functional and exectues is in a single,
-  /// globally shared thread
+  /// Intended use is to delegate a lambda to be executed in a single thread.
+  /// This base class doubles as the null delegator, which simply executes
+  /// the lambda in the caller thread.
   class single_threaded_delegator {
     public:
-    virtual void delegate(std::function<void()> func) = 0;
+    virtual void delegate(std::function<void()> func)  {
+      func();
+    }
+    virtual ~single_threaded_delegator() = default;
+    static single_threaded_delegator& get() {
+      static single_threaded_delegator instance;
+      return instance;
+    }
   };
 
 
@@ -35,11 +43,15 @@ namespace traccc::cuda {
       });
     }
 
-    ~single_threaded_delegator_fire_and_forget() {
+    ~single_threaded_delegator_fire_and_forget() noexcept override {
       m_group.wait();
     }
 
     single_threaded_delegator_fire_and_forget() : m_arena(1) {}
+    static single_threaded_delegator_fire_and_forget& get() {
+      static single_threaded_delegator_fire_and_forget instance;
+      return instance;
+    }
 
     private:
     tbb::task_arena m_arena;
@@ -51,7 +63,7 @@ namespace traccc::cuda {
   ///
   /// The caller blocks on a spinlock until the delegated task completes.
   /// If the lambda threw, the exception is rethrown at the call site.
-  class single_threaded_delegator_sync {
+  class single_threaded_delegator_sync : public single_threaded_delegator {
     public:
     void delegate(std::function<void()> func) {
       std::exception_ptr eptr = nullptr;
@@ -77,8 +89,12 @@ namespace traccc::cuda {
       }
     }
 
-    ~single_threaded_delegator_sync() {
+    ~single_threaded_delegator_sync() noexcept override{
       m_group.wait();
+    }
+    static single_threaded_delegator_sync& get() {
+      static single_threaded_delegator_sync instance;
+      return instance;
     }
 
     single_threaded_delegator_sync() : m_arena(1) {}
