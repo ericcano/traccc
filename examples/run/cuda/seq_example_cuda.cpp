@@ -187,17 +187,17 @@ int seq_run(const traccc::opts::detector& detector_opts,
                                        logger().clone("HostFittingAlg"));
 
     traccc::cuda::clusterization_algorithm ca_cuda(
-        mr, copy, stream, clusterization_opts, traccc::cuda::single_threaded_delegator::get(),
+        mr, copy, stream, traccc::cuda::thread_delegator::get(), clusterization_opts, 
         logger().clone("CudaClusteringAlg"));
     traccc::cuda::measurement_sorting_algorithm ms_cuda(
         mr, copy, stream, logger().clone("CudaMeasSortingAlg"));
     device_spacepoint_formation_algorithm sf_cuda(
-        mr, copy, stream, logger().clone("CudaSpFormationAlg"));
+        mr, copy, stream, traccc::cuda::thread_delegator::get(), logger().clone("CudaSpFormationAlg"));
     traccc::cuda::triplet_seeding_algorithm sa_cuda(
         seedfinder_config, spacepoint_grid_config, seedfilter_config, mr, copy,
-        stream, logger().clone("CudaSeedingAlg"));
+        stream, traccc::cuda::thread_delegator::get(), logger().clone("CudaSeedingAlg"));
     traccc::cuda::seed_parameter_estimation_algorithm tp_cuda(
-        track_params_estimation_config, mr, copy, stream,
+        track_params_estimation_config, mr, copy, stream, traccc::cuda::thread_delegator::get(),
         logger().clone("CudaTrackParEstAlg"));
     device_finding_algorithm finding_alg_cuda(finding_cfg, mr, copy, stream,
                                               logger().clone("CudaFindingAlg"));

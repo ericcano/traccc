@@ -139,6 +139,8 @@ class full_chain_algorithm
     mutable vecmem::binary_page_memory_resource m_cached_pinned_host_mr;
     /// CUDA stream to use
     stream m_stream;
+    /// Thread delegator to use TODO: default for the moment, to be selected by user later
+    thread_delegator & m_thread_delegator = thread_delegator::get();
     /// Device memory resource
     vecmem::cuda::device_memory_resource m_device_mr;
     /// Device caching memory resource

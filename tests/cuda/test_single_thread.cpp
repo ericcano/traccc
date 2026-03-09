@@ -8,7 +8,8 @@
 
 #include <gtest/gtest.h>
 
-#include "traccc/cuda/utils/single_thread_delegation.hpp"
+
+#include "traccc/cuda/utils/thread_delegator.hpp"
 
 TEST(CUDASingleThreadedDelegator, ExceptionPropagation) {
     traccc::cuda::single_threaded_delegator_sync delegator;

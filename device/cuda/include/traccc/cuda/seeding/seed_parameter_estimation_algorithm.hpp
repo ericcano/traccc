@@ -34,7 +34,7 @@ struct seed_parameter_estimation_algorithm
     seed_parameter_estimation_algorithm(
         const track_params_estimation_config& config,
         const traccc::memory_resource& mr, vecmem::copy& copy,
-        cuda::stream& str,
+        cuda::stream& str, thread_delegator& delegator,
         std::unique_ptr<const Logger> logger = getDummyLogger().clone(),
         await_function_t await_func = default_await_function);
 

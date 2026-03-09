@@ -57,7 +57,7 @@ TEST(CUDAClustering, SingleModule) {
     dd.geometry_id()[0] = detray::geometry::barcode{0u};
 
     // Run Clusterization
-    traccc::cuda::clusterization_algorithm ca_cuda(mr, copy, stream,
+    traccc::cuda::clusterization_algorithm ca_cuda(mr, copy, stream, traccc::cuda::thread_delegator::get(),
                                                    default_ccl_test_config());
 
     auto measurements_buffer =

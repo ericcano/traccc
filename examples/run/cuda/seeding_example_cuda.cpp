@@ -176,10 +176,10 @@ int seq_run(const traccc::opts::track_seeding& seeding_opts,
         seedfilter_config,
         mr,
         async_copy,
-        stream,
+        stream, traccc::cuda::thread_delegator::get(),
         logger().clone("CudaSeedingAlg")};
     traccc::cuda::seed_parameter_estimation_algorithm tp_cuda{
-        track_params_estimation_config, mr, async_copy, stream,
+        track_params_estimation_config, mr, async_copy, stream, traccc::cuda::thread_delegator::get(),
         logger().clone("CudaTrackParEstAlg")};
 
     // Propagation configuration
