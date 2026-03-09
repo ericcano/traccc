@@ -12,8 +12,8 @@
 
 namespace traccc::cuda {
 
-algorithm_base::algorithm_base(cuda::stream& str)
-    : m_stream(str), m_warp_size(details::get_warp_size(str.device())) {}
+algorithm_base::algorithm_base(cuda::stream& str, thread_delegator& delegator)
+    : m_stream(str), m_delegator(delegator), m_warp_size(details::get_warp_size(str.device())) {}
 
 cuda::stream& algorithm_base::stream() const {
 

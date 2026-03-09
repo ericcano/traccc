@@ -9,6 +9,7 @@
 
 // Local include(s).
 #include "traccc/cuda/utils/stream.hpp"
+#include "traccc/cuda/utils/thread_delegator.hpp"
 
 // System include(s).
 #include <functional>
@@ -25,8 +26,9 @@ class algorithm_base {
     /// Constructor for the algorithm base
     ///
     /// @param str The CUDA stream to perform all operations on
+    /// @param delegator The thread delegator to use for delegating tasks to a single thread
     ///
-    explicit algorithm_base(cuda::stream& str);
+    explicit algorithm_base(cuda::stream& str, thread_delegator& delegator);
 
     /// Get the CUDA stream of the algorithm
     cuda::stream& stream() const;
@@ -36,6 +38,8 @@ class algorithm_base {
     private:
     /// The CUDA stream to use
     std::reference_wrapper<cuda::stream> m_stream;
+    /// The thread delegator to use
+    std::reference_wrapper<thread_delegator> m_delegator;
     /// Warp size of the GPU being used
     unsigned int m_warp_size;
 

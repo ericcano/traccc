@@ -14,7 +14,7 @@
 #include "traccc/clusterization/device/clusterization_algorithm.hpp"
 
 // Single thread delegation utilities
-#include "traccc/cuda/utils/single_thread_delegation.hpp"
+#include "traccc/cuda/utils/thread_delegator.hpp"
 
 namespace traccc::cuda {
 
@@ -42,8 +42,7 @@ class clusterization_algorithm : public device::clusterization_algorithm,
     ///
     clusterization_algorithm(
         const traccc::memory_resource& mr, vecmem::copy& copy,
-        cuda::stream& str, const config_type& config,
-        single_threaded_delegator& delegator = single_threaded_delegator::get(),
+        cuda::stream& str, thread_delegator& delegator, const config_type& config,
         std::unique_ptr<const Logger> logger = getDummyLogger().clone(),
         await_function_t await_func = default_await_function);
 
@@ -79,8 +78,6 @@ class clusterization_algorithm : public device::clusterization_algorithm,
 
     private:
     await_function_t m_await_function;
-    single_threaded_delegator& m_delegator;
-
 
 };  // class clusterization_algorithm
 

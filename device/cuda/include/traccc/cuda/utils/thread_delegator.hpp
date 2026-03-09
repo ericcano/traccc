@@ -19,14 +19,14 @@ namespace traccc::cuda {
   /// Intended use is to delegate a lambda to be executed in a single thread.
   /// This base class doubles as the null delegator, which simply executes
   /// the lambda in the caller thread.
-  class single_threaded_delegator {
+  class thread_delegator {
     public:
     virtual void delegate(std::function<void()> func)  {
       func();
     }
-    virtual ~single_threaded_delegator() = default;
-    static single_threaded_delegator& get() {
-      static single_threaded_delegator instance;
+    virtual ~thread_delegator() = default;
+    static thread_delegator& get() {
+      static thread_delegator instance;
       return instance;
     }
   };
@@ -35,7 +35,7 @@ namespace traccc::cuda {
   /// Derived class of single_threaded_delegator that does not propagate exceptions
   /// back to the caller. The caller does not block, and the delegated task is executed asynchronously.
   /// Exceptions handling is left to the TBB task scheduler, which will catch and log them (to be tested).
-  class single_threaded_delegator_fire_and_forget : public single_threaded_delegator {
+  class single_threaded_delegator_fire_and_forget : public thread_delegator {
     public:
     void delegate(std::function<void()> func) override {
       m_arena.enqueue([this, func](){
@@ -63,7 +63,7 @@ namespace traccc::cuda {
   ///
   /// The caller blocks on a spinlock until the delegated task completes.
   /// If the lambda threw, the exception is rethrown at the call site.
-  class single_threaded_delegator_sync : public single_threaded_delegator {
+  class single_threaded_delegator_sync : public thread_delegator {
     public:
     void delegate(std::function<void()> func) {
       std::exception_ptr eptr = nullptr;

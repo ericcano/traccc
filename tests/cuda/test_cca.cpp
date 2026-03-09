@@ -38,7 +38,7 @@ cca_function_t get_f_with(traccc::clustering_config cfg) {
         vecmem::cuda::async_copy copy{stream.cudaStream()};
 
         traccc::cuda::clusterization_algorithm cc({device_mr, &host_mr}, copy,
-                                                  stream, cfg);
+                                                  stream, traccc::cuda::thread_delegator::get(), cfg);
 
         traccc::silicon_detector_description::buffer dd_buffer{
             static_cast<

@@ -93,7 +93,7 @@ TEST(CUDASpacepointFormation, cuda) {
 
     // Run spacepoint formation
     traccc::cuda::silicon_pixel_spacepoint_formation_algorithm sp_formation(
-        mr, copy, stream);
+        mr, copy, stream, traccc::cuda::thread_delegator::get());
     auto spacepoints_buffer =
         sp_formation(device_det, vecmem::get_data(measurements));
 
