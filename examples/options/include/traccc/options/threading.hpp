@@ -29,6 +29,14 @@ class threading : public interface {
 
     await_strategy await_mode = await_strategy::sync;
 
+    enum class thread_delegation_strategy {
+        immediate,      ///< No delegation, all code is executed in the caller thread (default)
+        fire_and_forget,///< Delegation to a single thread without waiting for completion
+        sync_delegation ///< Delegation to a single thread with synchronous waiting for completion
+    };
+
+    thread_delegation_strategy delegation_strategy = thread_delegation_strategy::immediate;
+
     /// The number of threads to use for the data processing
     std::size_t threads = 1;
 

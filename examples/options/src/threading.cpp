@@ -24,6 +24,10 @@ static const char* concurrent_slots_option = "concurrent-slots";
 using await_strategy_type = std::string;
 /// Name of the await strategy option
 static const char* await_strategy_option = "await-strategy";
+/// Type alias for the delegation strategy enumeration
+using delegation_strategy_type = std::string;
+/// Name of the delegation strategy option
+static const char* delegation_strategy_option = "cuda-delegation-strategy";
 
 threading::threading() : interface("Multi-Threading Options") {
 
@@ -37,7 +41,11 @@ threading::threading() : interface("Multi-Threading Options") {
         "processed concurrently, be default equal to cpu-threads")(
         await_strategy_option,
         boost::program_options::value<std::string>()->default_value("sync"),
-        "The await strategy to use (\"sync\" or \"suspend\")");
+        "The await strategy to use (\"sync\" or \"suspend\")")(
+        delegation_strategy_option,
+        boost::program_options::value<std::string>()->default_value("immediate"),
+        "The strategy to use for delegating CUDA runtime calls to a single thread (\"immediate\","
+        "\"fire_and_forget\" or \"sync_delegation\")");
 }
 
 void threading::read(const boost::program_options::variables_map& vm) {
@@ -64,6 +72,20 @@ void threading::read(const boost::program_options::variables_map& vm) {
         } else {
             throw std::invalid_argument{"Unknown await strategy: " +
                                         await_string};
+        }
+    }
+    if (vm.count(delegation_strategy_option)) {
+        const std::string delegation_string =
+            vm[delegation_strategy_option].as<delegation_strategy_type>();
+        if (delegation_string == "immediate") {
+            delegation_strategy = thread_delegation_strategy::immediate;
+        } else if (delegation_string == "fire_and_forget") {
+            delegation_strategy = thread_delegation_strategy::fire_and_forget;
+        } else if (delegation_string == "sync_delegation") {
+            delegation_strategy = thread_delegation_strategy::sync_delegation;
+        } else {
+            throw std::invalid_argument{"Unknown delegation strategy: " +
+                                        delegation_string};
         }
     }
 }
