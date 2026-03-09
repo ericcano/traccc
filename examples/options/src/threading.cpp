@@ -112,6 +112,16 @@ std::unique_ptr<configuration_printable> threading::as_printable() const {
         "Number of CPU thread", std::to_string(threads)));
     cat->add_child(std::make_unique<configuration_kv_pair>(
         "Number of concurrent slots", std::to_string(concurrent_slots)));
+    cat->add_child(std::make_unique<configuration_kv_pair>(
+        "CUDA delegation strategy",
+        delegation_strategy == thread_delegation_strategy::immediate
+            ? "immediate"
+            : (delegation_strategy == thread_delegation_strategy::fire_and_forget
+                   ? "fire_and_forget"
+                   : (delegation_strategy ==
+                              thread_delegation_strategy::sync_delegation
+                          ? "sync_delegation"
+                          : "unknown"))));
     return cat;
 }
 
