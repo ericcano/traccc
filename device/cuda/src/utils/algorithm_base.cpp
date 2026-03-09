@@ -20,6 +20,11 @@ cuda::stream& algorithm_base::stream() const {
     return m_stream.get();
 }
 
+thread_delegator& algorithm_base::delegator() const {
+
+    return m_delegator.get();
+}
+
 unsigned int algorithm_base::warp_size() const {
 
     return m_warp_size;

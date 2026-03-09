@@ -32,6 +32,8 @@ class algorithm_base {
 
     /// Get the CUDA stream of the algorithm
     cuda::stream& stream() const;
+    /// Get the thread delegator of the algorithm
+    thread_delegator& delegator() const;
     /// Get the warp size of the GPU being used
     unsigned int warp_size() const;
 
