@@ -47,15 +47,17 @@ void clusterization_algorithm::ccl_kernel(
     const unsigned int num_blocks =
         (payload.n_cells + (payload.config.target_partition_size()) - 1) /
         payload.config.target_partition_size();
-    kernels::ccl_kernel<<<num_blocks, payload.config.threads_per_partition,
-                          2 * payload.config.max_partition_size() *
-                              sizeof(device::details::index_t),
-                          details::get_stream(stream())>>>(
-        payload.config, payload.cells, payload.det_descr, payload.measurements,
-        payload.cell_links, payload.f_backup, payload.gf_backup,
-        payload.adjc_backup, payload.adjv_backup, payload.backup_mutex,
-        payload.disjoint_set, payload.cluster_sizes);
-    TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
+    delegator().delegate([&payload, num_blocks, this]() {
+        kernels::ccl_kernel<<<num_blocks, payload.config.threads_per_partition,
+                            2 * payload.config.max_partition_size() *
+                                sizeof(device::details::index_t),
+                            details::get_stream(stream())>>>(
+            payload.config, payload.cells, payload.det_descr, payload.measurements,
+            payload.cell_links, payload.f_backup, payload.gf_backup,
+            payload.adjc_backup, payload.adjv_backup, payload.backup_mutex,
+            payload.disjoint_set, payload.cluster_sizes);
+        TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
+    });
 }
 
 void clusterization_algorithm::cluster_maker_kernel(
@@ -65,10 +67,13 @@ void clusterization_algorithm::cluster_maker_kernel(
 
     const unsigned int num_threads = warp_size() * 16u;
     const unsigned int num_blocks = (num_cells + num_threads - 1) / num_threads;
-    kernels::reify_cluster_data<<<num_blocks, num_threads, 0,
-                                  details::get_stream(stream())>>>(
-        disjoint_set, cluster_data);
-    TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
+    delegator().delegate([num_blocks, num_threads, &disjoint_set, &cluster_data,
+                        this]() {
+        kernels::reify_cluster_data<<<num_blocks, num_threads, 0,
+                                    details::get_stream(stream())>>>(
+            disjoint_set, cluster_data);
+        TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());  
+    });
 }
 
 void clusterization_algorithm::await() const {

@@ -20,7 +20,7 @@ full_chain_algorithm::full_chain_algorithm(
     const fitting_algorithm::config_type& fitting_config,
     const silicon_detector_description::host& det_descr,
     const magnetic_field& field, const host_detector* detector,
-    std::unique_ptr<const traccc::Logger> logger, await_strategy)
+    std::unique_ptr<const traccc::Logger> logger, await_strategy, thread_delegation_strategy)
     : messaging(logger->clone()),
       m_mr(mr),
       m_copy{std::make_unique<vecmem::copy>()},

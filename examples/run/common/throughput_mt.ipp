@@ -9,6 +9,7 @@
 
 // Local include(s).
 #include "await_strategy.hpp"
+#include "thread_delegation_strategy.hpp"
 #include "make_magnetic_field.hpp"
 
 // Project include(s)
@@ -176,6 +177,22 @@ int throughput_mt(std::string_view description, int argc, char* argv[]) {
         await_mode = await_strategy::sync; // Placeholder for suspension modes
     }
 
+    // Determine the CUDA thread delegation strategy to use.
+    thread_delegation_strategy thread_delegation_mode =
+        thread_delegation_strategy::immediate;
+    if (threading_opts.delegation_strategy ==
+        opts::threading::thread_delegation_strategy::fire_and_forget) {
+        thread_delegation_mode = thread_delegation_strategy::fire_and_forget;
+    } else if (threading_opts.delegation_strategy ==
+               opts::threading::thread_delegation_strategy::sync_delegation) {
+        thread_delegation_mode = thread_delegation_strategy::sync_delegation;
+    } else if (threading_opts.delegation_strategy ==
+               opts::threading::thread_delegation_strategy::immediate) {
+        thread_delegation_mode = thread_delegation_strategy::immediate;
+    } else {
+        throw std::invalid_argument("Unknown CUDA delegation strategy");
+    }
+
     // Set up the full-chain algorithm(s). One for each concurrent slot
     std::vector<FULL_CHAIN_ALG> algs;
     algs.reserve(threading_opts.concurrent_slots + 1);
@@ -184,7 +201,7 @@ int throughput_mt(std::string_view description, int argc, char* argv[]) {
                         spacepoint_grid_config, seedfilter_config,
                         track_params_estimation_config, finding_cfg,
                         fitting_cfg, det_descr, field, &detector,
-                        logger().clone(), await_mode});
+                        logger().clone(), await_mode, thread_delegation_mode});
     }
 
     // Set up a lambda that calls the correct function on the algorithms.

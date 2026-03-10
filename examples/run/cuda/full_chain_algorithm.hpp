@@ -9,6 +9,7 @@
 
 // Project includes(s).
 #include "../common/await_strategy.hpp"
+#include "../common/thread_delegation_strategy.hpp"
 
 // Project include(s).
 #include "traccc/clusterization/clustering_config.hpp"
@@ -54,6 +55,18 @@ class await_strategy_helper {
     await_function_t m_await = default_await_function;
 };
 
+class thread_delegation_strategy_helper {
+    public:
+    thread_delegation_strategy_helper(
+        thread_delegation_strategy delegation_mode =
+            thread_delegation_strategy::immediate): m_delegation_mode(delegation_mode) {};
+    thread_delegator& get_delegator() const;
+
+    private:
+    thread_delegation_strategy m_delegation_mode =
+        thread_delegation_strategy::immediate;
+};
+
 /// Algorithm performing the full chain of track reconstruction
 ///
 /// At least as much as is implemented in the project at any given moment.
@@ -96,7 +109,8 @@ class full_chain_algorithm
         const silicon_detector_description::host& det_descr,
         const magnetic_field& field, host_detector* detector,
         std::unique_ptr<const traccc::Logger> logger,
-        await_strategy_helper await_func_helper = await_strategy_helper());
+        await_strategy_helper await_func_helper = await_strategy_helper(),
+        thread_delegation_strategy thread_delegation_mode = thread_delegation_strategy::immediate);
 
     /// Copy constructor
     ///
@@ -139,8 +153,8 @@ class full_chain_algorithm
     mutable vecmem::binary_page_memory_resource m_cached_pinned_host_mr;
     /// CUDA stream to use
     stream m_stream;
-    /// Thread delegator to use TODO: default for the moment, to be selected by user later
-    thread_delegator & m_thread_delegator = thread_delegator::get();
+    /// Thread delegator for CUDA
+    thread_delegator & m_thread_delegator;
     /// Device memory resource
     vecmem::cuda::device_memory_resource m_device_mr;
     /// Device caching memory resource
