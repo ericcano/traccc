@@ -49,14 +49,17 @@ void silicon_pixel_spacepoint_formation_algorithm::form_spacepoints_kernel(
     const unsigned int n_threads = warp_size() * 8;
     const unsigned int n_blocks =
         (payload.n_measurements + n_threads - 1) / n_threads;
-    detector_buffer_visitor<detector_type_list>(
-        payload.detector, [&]<typename detector_traits_t>(
-                              const typename detector_traits_t::view& det) {
-            kernels::form_spacepoints<detector_traits_t>
-                <<<n_blocks, n_threads, 0, details::get_stream(stream())>>>(
-                    det, payload.measurements, payload.spacepoints);
-        });
-    TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
+    delegator().delegate([n_blocks, n_threads, &payload, this]() {
+        detector_buffer_visitor<detector_type_list>(
+            payload.detector, [&]<typename detector_traits_t>(
+                                const typename detector_traits_t::view& det) {
+                kernels::form_spacepoints<detector_traits_t>
+                    <<<n_blocks, n_threads, 0, details::get_stream(stream())>>>(
+                        det, payload.measurements, payload.spacepoints);
+            });
+        TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
+    });
+
 }
 
 void silicon_pixel_spacepoint_formation_algorithm::await() const {

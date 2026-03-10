@@ -49,15 +49,18 @@ void seed_parameter_estimation_algorithm::estimate_seed_params_kernel(
 
     const unsigned int n_threads = warp_size() * 4;
     const unsigned int n_blocks = (payload.n_seeds + n_threads - 1) / n_threads;
-    magnetic_field_visitor<bfield_type_list<scalar>>(
-        payload.bfield,
-        [&]<typename bfield_view_t>(const bfield_view_t& bfield) {
-            kernels::estimate_track_params<default_algebra>
-                <<<n_blocks, n_threads, 0, details::get_stream(stream())>>>(
-                    payload.config, payload.measurements, payload.spacepoints,
-                    payload.seeds, bfield, payload.params);
-        });
-    TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
+    delegator().delegate([n_blocks, n_threads, &payload, this]() {
+        magnetic_field_visitor<bfield_type_list<scalar>>(
+            payload.bfield,
+            [&]<typename bfield_view_t>(const bfield_view_t& bfield) {
+                kernels::estimate_track_params<default_algebra>
+                    <<<n_blocks, n_threads, 0, details::get_stream(stream())>>>(
+                        payload.config, payload.measurements, payload.spacepoints,
+                        payload.seeds, bfield, payload.params);
+            });
+        TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
+    });
+
 }
 
 void seed_parameter_estimation_algorithm::await() const {

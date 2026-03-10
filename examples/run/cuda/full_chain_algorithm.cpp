@@ -43,6 +43,20 @@ await_strategy_helper::await_strategy_helper(await_strategy await_mode) {
             throw std::invalid_argument("Unknown await strategy");
     }
 }
+
+thread_delegator& thread_delegation_strategy_helper::get_delegator() const {
+    switch (m_delegation_mode) {
+        case thread_delegation_strategy::immediate:
+            return thread_delegator::get();
+        case thread_delegation_strategy::fire_and_forget:
+            return single_threaded_delegator_fire_and_forget::get();
+        case thread_delegation_strategy::sync_delegation:
+            return single_threaded_delegator_sync::get();
+        default:
+            throw std::invalid_argument("Unknown thread delegation strategy");
+    }
+}
+
 traccc::cuda::await_function_t await_strategy_helper::get_await_function()
     const noexcept {
     return m_await;
@@ -60,14 +74,15 @@ full_chain_algorithm::full_chain_algorithm(
     const silicon_detector_description::host& det_descr,
     const magnetic_field& field, host_detector* detector,
     std::unique_ptr<const traccc::Logger> logger,
-    await_strategy_helper await_func_helper)
+    await_strategy_helper await_func_helper,
+    thread_delegation_strategy thread_delegation_mode)
     : messaging(logger->clone()),
       m_await_function(await_func_helper.get_await_function()),
       m_host_mr(host_mr),
       m_pinned_host_mr(),
       m_cached_pinned_host_mr(m_pinned_host_mr),
       m_stream(),
-      // placeholder for thread delegator instanciation
+      m_thread_delegator(thread_delegation_strategy_helper(thread_delegation_mode).get_delegator()),
       m_device_mr(),
       m_cached_device_mr(m_device_mr),
       m_copy(m_stream.cudaStream()),
@@ -133,6 +148,7 @@ full_chain_algorithm::full_chain_algorithm(const full_chain_algorithm& parent)
       m_pinned_host_mr(),
       m_cached_pinned_host_mr(m_pinned_host_mr),
       m_stream(),
+      m_thread_delegator(parent.m_thread_delegator),
       m_device_mr(),
       m_cached_device_mr(m_device_mr),
       m_copy(m_stream.cudaStream()),
