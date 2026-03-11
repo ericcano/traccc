@@ -135,8 +135,8 @@ TEST(CUDASingleThreadedDelegator, MultipleDelegationsInTasksSuspend) {
     tbb::task_arena outer_arena(std::thread::hardware_concurrency());
     auto& delegator_suspend = traccc::cuda::single_threaded_delegator_suspend::get();
     tbb::task_group tg;
-    outer_arena.execute([&]() {
-        for (int i = 0; i < 500; ++i) {
+    for (int i = 0; i < 500; ++i) {
+        outer_arena.execute([&]() {
             tg.run([i, &delegator_suspend]() {
                 TEST_LOG("Outer suspend task " << i << " begin in thread " << std::this_thread::get_id());
                 EXPECT_NO_THROW(delegator_suspend.delegate([i]() {
@@ -146,7 +146,7 @@ TEST(CUDASingleThreadedDelegator, MultipleDelegationsInTasksSuspend) {
                 }));
                 TEST_LOG("Outer suspend task " << i << " end in thread " << std::this_thread::get_id());
             });
-        }
-        tg.wait();
-    });
+        });
+    }
+    tg.wait();
 }   
