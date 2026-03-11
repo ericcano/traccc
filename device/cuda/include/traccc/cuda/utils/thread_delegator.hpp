@@ -10,6 +10,7 @@
 #include <atomic>
 #include <exception>
 #include <functional>
+#include <tbb/task.h>
 #include <tbb/task_arena.h>
 #include <tbb/task_group.h>
 
@@ -34,20 +35,25 @@ namespace traccc::cuda {
 
   /// Derived class of single_threaded_delegator that does not propagate exceptions
   /// back to the caller. The caller does not block, and the delegated task is executed asynchronously.
-  /// Exceptions handling is left to the TBB task scheduler, which will catch and log them (to be tested).
+  /// Exceptions are discarded.
   class single_threaded_delegator_fire_and_forget : public thread_delegator {
     public:
     void delegate(std::function<void()> func) override {
       m_arena.enqueue([this, func](){
-          m_group.run(func);
+          m_group.run([this, func]() { try { func(); } catch (...) {}});
       });
     }
 
     ~single_threaded_delegator_fire_and_forget() noexcept override {
+      try {
+        m_group.wait();
+      } catch (...) {
+        // discard exceptions
+      }
       m_group.wait();
     }
 
-    single_threaded_delegator_fire_and_forget() : m_arena(1) {}
+    single_threaded_delegator_fire_and_forget() : m_arena(1, 0, tbb::task_arena::priority::high) {}
     static single_threaded_delegator_fire_and_forget& get() {
       static single_threaded_delegator_fire_and_forget instance;
       return instance;
@@ -97,10 +103,57 @@ namespace traccc::cuda {
       return instance;
     }
 
-    single_threaded_delegator_sync() : m_arena(1) {}
+    single_threaded_delegator_sync() : m_arena(1, 0, tbb::task_arena::priority::high) {}
 
     private:
     tbb::task_arena m_arena;
     tbb::task_group m_group;
   };
+
+  /// Synchronized variant that uses TBB task suspension instead of spinlocking.
+  ///
+  /// The calling thread must be executing inside a TBB task context (e.g. inside
+  /// a tbb::task_arena or tbb::task_group). It is suspended via
+  /// tbb::this_task::suspend and woken up by the worker task once it completes.
+  /// Exceptions thrown by the lambda are captured and rethrown at the call site.
+  class single_threaded_delegator_suspend : public thread_delegator {
+    public:
+    void delegate(std::function<void()> func) override {
+      std::exception_ptr eptr = nullptr;
+
+      tbb::task::suspend([&](tbb::task::suspend_point tag) {
+        m_arena.enqueue([this, &func, &eptr, tag]() {
+          m_group.run([&func, &eptr, tag]() {
+            try {
+              func();
+            } catch (...) {
+              eptr = std::current_exception();
+            }
+            tbb::task::resume(tag);
+          });
+        });
+      });
+
+      if (eptr) {
+        std::rethrow_exception(eptr);
+      }
+    }
+
+    ~single_threaded_delegator_suspend() noexcept override {
+      m_group.wait();
+    }
+
+    static single_threaded_delegator_suspend& get() {
+      static single_threaded_delegator_suspend instance;
+      return instance;
+    }
+
+    single_threaded_delegator_suspend() : m_arena(1, 0, tbb::task_arena::priority::high) {}
+
+    private:
+    tbb::task_arena m_arena;
+    tbb::task_group m_group;
+  };
+
+  
 }
