@@ -232,7 +232,7 @@ int throughput_mt(std::string_view description, int argc, char* argv[]) {
     // allowed to use the specified number of threads.
     tbb::global_control global_thread_limit(
         tbb::global_control::max_allowed_parallelism,
-        threading_opts.threads + 1);
+        threading_opts.threads + 2);
     tbb::task_arena arena{static_cast<int>(threading_opts.threads), 0};
     tbb::task_group group;
 

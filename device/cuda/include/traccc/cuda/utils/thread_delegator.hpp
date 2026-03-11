@@ -10,6 +10,7 @@
 #include <atomic>
 #include <exception>
 #include <functional>
+#include <iostream>
 #include <tbb/task.h>
 #include <tbb/task_arena.h>
 #include <tbb/task_group.h>
@@ -116,23 +117,55 @@ namespace traccc::cuda {
   /// a tbb::task_arena or tbb::task_group). It is suspended via
   /// tbb::this_task::suspend and woken up by the worker task once it completes.
   /// Exceptions thrown by the lambda are captured and rethrown at the call site.
+  ///
+  /// Define THREAD_DELEGATOR_VERBOSE before including this header to enable
+  /// per-call diagnostic printouts.
+// #define THREAD_DELEGATOR_VERBOSE
   class single_threaded_delegator_suspend : public thread_delegator {
     public:
     void delegate(std::function<void()> func) override {
       std::exception_ptr eptr = nullptr;
+      const unsigned long serial = m_serial.fetch_add(1, std::memory_order_relaxed);
+
+#ifdef THREAD_DELEGATOR_VERBOSE
+      std::cout << "[suspend delegator #" << serial << "] outer before suspend"
+                << " thread=" << std::this_thread::get_id() << "\n";
+#endif
 
       tbb::task::suspend([&](tbb::task::suspend_point tag) {
-        m_arena.enqueue([this, &func, &eptr, tag]() {
-          m_group.run([&func, &eptr, tag]() {
+#ifdef THREAD_DELEGATOR_VERBOSE
+        std::cout << "[suspend delegator #" << serial << "] outer lambda, about to enqueue"
+                  << " thread=" << std::this_thread::get_id() << "\n";
+#endif
+        m_arena.enqueue([this, &func, &eptr, tag, serial]() {
+          m_group.run([&func, &eptr, tag, serial]() {
+#ifdef THREAD_DELEGATOR_VERBOSE
+            std::cout << "[suspend delegator #" << serial << "] inner begin"
+                      << " thread=" << std::this_thread::get_id() << "\n";
+#endif
             try {
               func();
             } catch (...) {
               eptr = std::current_exception();
             }
+#ifdef THREAD_DELEGATOR_VERBOSE
+            std::cout << "[suspend delegator #" << serial << "] inner end"
+                      << " thread=" << std::this_thread::get_id() << "\n";
+#endif
             tbb::task::resume(tag);
           });
         });
+#ifdef THREAD_DELEGATOR_VERBOSE
+        std::cout << "[suspend delegator #" << serial << "] outer lambda, done enqueuing"
+                  << " thread=" << std::this_thread::get_id() << "\n";
+#endif
+
       });
+
+#ifdef THREAD_DELEGATOR_VERBOSE
+      std::cout << "[suspend delegator #" << serial << "] outer after resume"
+                << " thread=" << std::this_thread::get_id() << "\n";
+#endif
 
       if (eptr) {
         std::rethrow_exception(eptr);
@@ -145,14 +178,19 @@ namespace traccc::cuda {
 
     static single_threaded_delegator_suspend& get() {
       static single_threaded_delegator_suspend instance;
+#ifdef THREAD_DELEGATOR_VERBOSE
+      std::cout << "Getting single_threaded_delegator_suspend instance at address " << &instance << " in thread "
+                << std::this_thread::get_id() << "\n";
+#endif
       return instance;
     }
 
-    single_threaded_delegator_suspend() : m_arena(1, 0, tbb::task_arena::priority::high) {}
+    single_threaded_delegator_suspend() : m_arena(1, 1, tbb::task_arena::priority::high) {}
 
     private:
     tbb::task_arena m_arena;
     tbb::task_group m_group;
+    std::atomic<unsigned long> m_serial{0};
   };
 
   

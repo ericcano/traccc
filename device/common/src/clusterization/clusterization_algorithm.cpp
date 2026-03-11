@@ -80,6 +80,16 @@ clusterization_algorithm::execute_impl(
     edm::silicon_cell_collection::const_view::size_type num_cells = 0u;
     if (mr().host) {
         const vecmem::async_size size = copy().get_size(cells, *(mr().host));
+        // Potential delegation to cUDA thread.
+        //
+        // using copy_t = decltype(copy().get_size(cells, *(mr().host)));
+        // constexpr std::size_t copy_size = sizeof(copy_t); 
+        // std::byte size_storage[copy_size];
+        // auto& size = *reinterpret_cast<copy_t*>(size_storage);
+        // delegator().delegate([this, &cells, &num_cells, &size]() {
+        //     new(&size) copy_t(copy().get_size(cells, *(mr().host)));
+        // });
+        
         // Here we could give control back to the caller, once our code allows
         // for it. (coroutines...)<-WIP
         await();
