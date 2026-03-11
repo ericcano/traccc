@@ -52,6 +52,8 @@ thread_delegator& thread_delegation_strategy_helper::get_delegator() const {
             return single_threaded_delegator_fire_and_forget::get();
         case thread_delegation_strategy::sync_delegation:
             return single_threaded_delegator_sync::get();
+        case thread_delegation_strategy::suspend:
+            return single_threaded_delegator_suspend::get();
         default:
             throw std::invalid_argument("Unknown thread delegation strategy");
     }

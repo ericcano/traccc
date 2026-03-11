@@ -45,7 +45,7 @@ threading::threading() : interface("Multi-Threading Options") {
         delegation_strategy_option,
         boost::program_options::value<std::string>()->default_value("immediate"),
         "The strategy to use for delegating CUDA runtime calls to a single thread (\"immediate\","
-        "\"fire_and_forget\" or \"sync_delegation\")");
+        "\"fire_and_forget\", \"sync_delegation\" or \"suspend\")");
 }
 
 void threading::read(const boost::program_options::variables_map& vm) {
@@ -83,6 +83,8 @@ void threading::read(const boost::program_options::variables_map& vm) {
             delegation_strategy = thread_delegation_strategy::fire_and_forget;
         } else if (delegation_string == "sync_delegation") {
             delegation_strategy = thread_delegation_strategy::sync_delegation;
+        } else if (delegation_string == "suspend") {
+            delegation_strategy = thread_delegation_strategy::suspend;
         } else {
             throw std::invalid_argument{"Unknown delegation strategy: " +
                                         delegation_string};
@@ -120,8 +122,11 @@ std::unique_ptr<configuration_printable> threading::as_printable() const {
                    ? "fire_and_forget"
                    : (delegation_strategy ==
                               thread_delegation_strategy::sync_delegation
-                          ? "sync_delegation"
-                          : "unknown"))));
+                         ? "sync_delegation"
+                          : (delegation_strategy ==
+                                     thread_delegation_strategy::suspend
+                                ? "suspend"
+                                : "unknown")))));
     return cat;
 }
 
