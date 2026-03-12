@@ -16,7 +16,7 @@ spack:
     # General dependencies
     - "intel-oneapi-tbb@2021.12.0"
     - "alpaka"
-    - "boost@1.85.0: +log+program_options"
+    - "boost@1.85.0: +log+program_options+fiber"
     - "indicators"
     # SYCL dependencies
     - "intel-oneapi-dpl"

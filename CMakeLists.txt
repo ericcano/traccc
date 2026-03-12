@@ -458,7 +458,7 @@ add_subdirectory( plugins )
 
 if ( TRACCC_BUILD_EXAMPLES )
    # Find Boost.
-   find_package( Boost CONFIG REQUIRED COMPONENTS program_options filesystem )
+   find_package( Boost CONFIG REQUIRED COMPONENTS program_options filesystem fiber)
    if ( NOT TRACCC_BUILD_IO )
       message(FATAL_ERROR "traccc::io is disabled, but it is required to build the examples.")
    endif()
