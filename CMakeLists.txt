@@ -296,6 +296,23 @@ if( TRACCC_SETUP_ALPAKA )
    endif()
 endif()
 
+
+# Setup Boost before Acts in order to override its  versions
+if ( TRACCC_BUILD_EXAMPLES )
+   # Set up Boost.
+   option( TRACCC_SETUP_BOOST
+      "Set up the Boost target(s) explicitly" TRUE )
+   option( TRACCC_USE_SYSTEM_BOOST
+      "Pick up an existing installation of Boost from the build environment" FALSE )
+   if( TRACCC_SETUP_BOOST )
+      if( TRACCC_USE_SYSTEM_BOOST )
+         find_package( Boost 1.84.0 CONFIG REQUIRED COMPONENTS program_options filesystem fiber )
+      else()
+         add_subdirectory( extern/boost )
+      endif()
+   endif()
+endif()
+
 # Set up Algebra Plugins.
 option( TRACCC_SETUP_ALGEBRA_PLUGINS
    "Set up the Algebra Plugins target(s) explicitly" TRUE )
@@ -458,7 +475,6 @@ add_subdirectory( plugins )
 
 if ( TRACCC_BUILD_EXAMPLES )
    # Find Boost.
-   find_package( Boost CONFIG REQUIRED COMPONENTS program_options filesystem fiber)
    if ( NOT TRACCC_BUILD_IO )
       message(FATAL_ERROR "traccc::io is disabled, but it is required to build the examples.")
    endif()
