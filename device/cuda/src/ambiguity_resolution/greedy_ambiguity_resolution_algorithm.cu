@@ -72,7 +72,7 @@ struct track_comparator {
 
 greedy_ambiguity_resolution_algorithm::greedy_ambiguity_resolution_algorithm(
     const config_type& cfg, const traccc::memory_resource& mr,
-    vecmem::copy& copy, cuda::cuda_stream& str, thread_delegator& delegator,
+    vecmem::copy& copy, cuda::stream& str, thread_delegator& delegator,
     std::unique_ptr<const Logger> logger)
     : messaging(std::move(logger)),
       algorithm_base(str, delegator),
