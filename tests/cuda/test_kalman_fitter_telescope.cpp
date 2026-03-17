@@ -148,7 +148,7 @@ TEST_P(KalmanFittingTelescopeTests, Run) {
     fit_cfg.ptc_hypothesis = ptc;
     fit_cfg.min_pT = 100.f * traccc::unit<float>::MeV;
     traccc::cuda::kalman_fitting_algorithm device_fitting(fit_cfg, mr, copy,
-                                                          stream);
+                                                          stream, traccc::cuda::thread_delegator::get());
 
     // Iterate over events
     for (std::size_t i_evt = 0; i_evt < n_events; i_evt++) {

@@ -8,6 +8,7 @@
 #pragma once
 
 // Library include(s).
+#include "traccc/cuda/utils/algorithm_base.hpp"
 #include "traccc/cuda/utils/stream.hpp"
 
 // Project include(s).
@@ -36,7 +37,8 @@ class combinatorial_kalman_filter_algorithm
           const detector_buffer&, const magnetic_field&,
           const edm::measurement_collection<default_algebra>::const_view&,
           const bound_track_parameters_collection_types::const_view&)>,
-      public messaging {
+      public messaging,
+      public algorithm_base {
 
     public:
     /// Configuration type
@@ -45,7 +47,7 @@ class combinatorial_kalman_filter_algorithm
     /// Constructor with the algorithm's configuration
     combinatorial_kalman_filter_algorithm(
         const config_type& config, const traccc::memory_resource& mr,
-        vecmem::copy& copy, stream& str,
+        vecmem::copy& copy, cuda::stream& str, thread_delegator& delegator,
         std::unique_ptr<const Logger> logger = getDummyLogger().clone());
 
     /// Execute the algorithm
@@ -72,10 +74,6 @@ class combinatorial_kalman_filter_algorithm
     traccc::memory_resource m_mr;
     /// Copy object used by the algorithm
     std::reference_wrapper<vecmem::copy> m_copy;
-    /// The CUDA stream to use
-    std::reference_wrapper<stream> m_stream;
-    /// Warp size of the GPU being used
-    unsigned int m_warp_size;
 
 };  // class combinatorial_kalman_filter_algorithm
 

@@ -8,6 +8,7 @@
 #pragma once
 
 // Local include(s).
+#include "traccc/cuda/utils/algorithm_base.hpp"
 #include "traccc/cuda/utils/stream.hpp"
 
 // Project include(s).
@@ -28,7 +29,8 @@ namespace traccc::cuda {
 class greedy_ambiguity_resolution_algorithm
     : public algorithm<edm::track_container<default_algebra>::buffer(
           const edm::track_container<default_algebra>::const_view&)>,
-      public messaging {
+      public messaging,
+      public algorithm_base {
 
     public:
     using config_type = ambiguity_resolution_config;
@@ -43,7 +45,7 @@ class greedy_ambiguity_resolution_algorithm
     ///
     greedy_ambiguity_resolution_algorithm(
         const config_type& cfg, const traccc::memory_resource& mr,
-        vecmem::copy& copy, stream& str,
+        vecmem::copy& copy, cuda::stream& str, thread_delegator& delegator,
         std::unique_ptr<const Logger> logger = getDummyLogger().clone());
 
     /// Run the algorithm
@@ -64,10 +66,6 @@ class greedy_ambiguity_resolution_algorithm
     traccc::memory_resource m_mr;
     /// The copy object to use
     std::reference_wrapper<vecmem::copy> m_copy;
-    /// The CUDA stream to use
-    std::reference_wrapper<stream> m_stream;
-    /// Warp size of the GPU being used
-    unsigned int m_warp_size;
 };
 
 }  // namespace traccc::cuda

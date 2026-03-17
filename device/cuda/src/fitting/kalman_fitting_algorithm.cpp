@@ -14,12 +14,12 @@ namespace traccc::cuda {
 
 kalman_fitting_algorithm::kalman_fitting_algorithm(
     const config_type& config, const traccc::memory_resource& mr,
-    vecmem::copy& copy, stream& str, std::unique_ptr<const Logger> logger)
+    vecmem::copy& copy, cuda::stream& str, thread_delegator& delegator,
+    std::unique_ptr<const Logger> logger)
     : messaging(std::move(logger)),
+      algorithm_base(str, delegator),
       m_config{config},
       m_mr{mr},
-      m_copy{copy},
-      m_stream{str},
-      m_warp_size(details::get_warp_size(str.device())) {}
+      m_copy{copy} {}
 
 }  // namespace traccc::cuda

@@ -190,7 +190,8 @@ int seq_run(const traccc::opts::detector& detector_opts,
         mr, copy, stream, traccc::cuda::thread_delegator::get(), clusterization_opts, 
         logger().clone("CudaClusteringAlg"));
     traccc::cuda::measurement_sorting_algorithm ms_cuda(
-        mr, copy, stream, logger().clone("CudaMeasSortingAlg"));
+        mr, copy, stream, traccc::cuda::thread_delegator::get(),
+        logger().clone("CudaMeasSortingAlg"));
     device_spacepoint_formation_algorithm sf_cuda(
         mr, copy, stream, traccc::cuda::thread_delegator::get(), logger().clone("CudaSpFormationAlg"));
     traccc::cuda::triplet_seeding_algorithm sa_cuda(
@@ -200,11 +201,14 @@ int seq_run(const traccc::opts::detector& detector_opts,
         track_params_estimation_config, mr, copy, stream, traccc::cuda::thread_delegator::get(),
         logger().clone("CudaTrackParEstAlg"));
     device_finding_algorithm finding_alg_cuda(finding_cfg, mr, copy, stream,
+                                              traccc::cuda::thread_delegator::get(),
                                               logger().clone("CudaFindingAlg"));
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
         resolution_config, mr, copy, stream,
+        traccc::cuda::thread_delegator::get(),
         logger().clone("CudaAmbiguityResolutionAlg"));
     device_fitting_algorithm fitting_alg_cuda(fitting_cfg, mr, copy, stream,
+                                              traccc::cuda::thread_delegator::get(),
                                               logger().clone("CudaFittingAlg"));
 
     // performance writer

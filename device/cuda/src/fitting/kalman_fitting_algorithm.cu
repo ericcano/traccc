@@ -20,16 +20,20 @@ kalman_fitting_algorithm::output_type kalman_fitting_algorithm::operator()(
     const {
 
     // Run the track fitting.
-    return detector_buffer_magnetic_field_visitor<
-        detector_type_list, cuda::bfield_type_list<scalar>>(
-        det, field,
-        [&]<typename detector_t, typename bfield_view_t>(
-            const typename detector_t::view& detector,
-            const bfield_view_t& bfield) {
-            return details::kalman_fitting<typename detector_t::device>(
-                detector, bfield, track_candidates, m_config, m_mr,
-                m_copy.get(), m_stream, m_warp_size);
-        });
+    output_type result{};
+    delegator().delegate([&]() {
+        result = detector_buffer_magnetic_field_visitor<
+            detector_type_list, cuda::bfield_type_list<scalar>>(
+            det, field,
+            [&]<typename detector_t, typename bfield_view_t>(
+                const typename detector_t::view& detector,
+                const bfield_view_t& bfield) {
+                return details::kalman_fitting<typename detector_t::device>(
+                    detector, bfield, track_candidates, m_config, m_mr,
+                    m_copy.get(), stream(), warp_size());
+            });
+    });
+    return result;
 }
 
 }  // namespace traccc::cuda

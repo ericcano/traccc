@@ -8,6 +8,7 @@
 #pragma once
 
 // Library include(s).
+#include "traccc/cuda/utils/algorithm_base.hpp"
 #include "traccc/cuda/utils/stream.hpp"
 
 // Project include(s).
@@ -33,7 +34,8 @@ class kalman_fitting_algorithm
     : public algorithm<edm::track_container<default_algebra>::buffer(
           const detector_buffer&, const magnetic_field&,
           const edm::track_container<default_algebra>::const_view&)>,
-      public messaging {
+      public messaging,
+      public algorithm_base {
 
     public:
     /// Configuration type
@@ -49,7 +51,7 @@ class kalman_fitting_algorithm
     ///
     kalman_fitting_algorithm(
         const config_type& config, const traccc::memory_resource& mr,
-        vecmem::copy& copy, stream& str,
+        vecmem::copy& copy, cuda::stream& str, thread_delegator& delegator,
         std::unique_ptr<const Logger> logger = getDummyLogger().clone());
 
     /// Execute the algorithm
@@ -72,10 +74,6 @@ class kalman_fitting_algorithm
     traccc::memory_resource m_mr;
     /// Copy object used by the algorithm
     std::reference_wrapper<vecmem::copy> m_copy;
-    /// The CUDA stream to use
-    std::reference_wrapper<stream> m_stream;
-    /// Warp size of the GPU being used
-    unsigned int m_warp_size;
 
 };  // class kalman_fitting_algorithm
 

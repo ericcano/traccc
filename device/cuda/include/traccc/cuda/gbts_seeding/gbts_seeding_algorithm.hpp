@@ -8,6 +8,7 @@
 #pragma once
 
 // Library include(s).
+#include "traccc/cuda/utils/algorithm_base.hpp"
 #include "traccc/cuda/utils/stream.hpp"
 
 // Project include(s).
@@ -39,7 +40,8 @@ class gbts_seeding_algorithm
           const edm::spacepoint_collection::const_view&,
           const edm::measurement_collection<default_algebra>::const_view&
               measurements)>,
-      public messaging {
+      public messaging,
+      public algorithm_base {
 
     public:
     /// Constructor for the seed finding algorithm
@@ -48,7 +50,7 @@ class gbts_seeding_algorithm
     ///
     gbts_seeding_algorithm(
         const gbts_seedfinder_config& cfg, traccc::memory_resource& mr,
-        vecmem::copy& copy, stream& str,
+        vecmem::copy& copy, cuda::stream& str, thread_delegator& delegator,
         std::unique_ptr<const Logger> logger = getDummyLogger().clone());
 
     /// Operator executing the algorithm.
@@ -68,8 +70,6 @@ class gbts_seeding_algorithm
     traccc::memory_resource m_mr;
     /// The copy object to use
     std::reference_wrapper<vecmem::copy> m_copy;
-    /// The CUDA stream to use
-    std::reference_wrapper<stream> m_stream;
 };
 
 }  // namespace traccc::cuda

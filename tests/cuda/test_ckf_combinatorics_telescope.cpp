@@ -153,9 +153,9 @@ TEST_P(CudaCkfCombinatoricsTelescopeTests, Run) {
 
     // Finding algorithm object
     traccc::cuda::combinatorial_kalman_filter_algorithm device_finding(
-        cfg_no_limit, mr, copy, stream);
+        cfg_no_limit, mr, copy, stream, traccc::cuda::thread_delegator::get());
     traccc::cuda::combinatorial_kalman_filter_algorithm device_finding_limit(
-        cfg_limit, mr, copy, stream);
+        cfg_limit, mr, copy, stream, traccc::cuda::thread_delegator::get());
 
     // Iterate over events
     for (std::size_t i_evt = 0; i_evt < n_events; i_evt++) {

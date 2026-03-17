@@ -193,7 +193,8 @@ int seq_run(const traccc::opts::track_seeding& seeding_opts,
     traccc::host::combinatorial_kalman_filter_algorithm host_finding(
         cfg, host_mr, logger().clone("HostFindingAlg"));
     traccc::cuda::combinatorial_kalman_filter_algorithm device_finding(
-        cfg, mr, async_copy, stream, logger().clone("CudaFindingAlg"));
+        cfg, mr, async_copy, stream, traccc::cuda::thread_delegator::get(),
+        logger().clone("CudaFindingAlg"));
 
     traccc::performance::timing_info elapsedTimes;
 

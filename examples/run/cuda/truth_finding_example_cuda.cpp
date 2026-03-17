@@ -142,7 +142,8 @@ int seq_run(const traccc::opts::track_finding& finding_opts,
     traccc::host::combinatorial_kalman_filter_algorithm host_finding(
         cfg, host_mr, logger().clone("HostFindingAlg"));
     traccc::cuda::combinatorial_kalman_filter_algorithm device_finding(
-        cfg, mr, async_copy, stream, logger().clone("CudaFindingAlg"));
+        cfg, mr, async_copy, stream, traccc::cuda::thread_delegator::get(),
+        logger().clone("CudaFindingAlg"));
 
     // Fitting algorithm object
     traccc::fitting_config fit_cfg(fitting_opts);
@@ -151,7 +152,8 @@ int seq_run(const traccc::opts::track_finding& finding_opts,
     traccc::host::kalman_fitting_algorithm host_fitting(
         fit_cfg, host_mr, host_copy, logger().clone("HostFittingAlg"));
     traccc::cuda::kalman_fitting_algorithm device_fitting(
-        fit_cfg, mr, async_copy, stream, logger().clone("CudaFittingAlg"));
+        fit_cfg, mr, async_copy, stream, traccc::cuda::thread_delegator::get(),
+        logger().clone("CudaFittingAlg"));
 
     traccc::performance::timing_info elapsedTimes;
 

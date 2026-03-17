@@ -27,17 +27,22 @@ combinatorial_kalman_filter_algorithm::operator()(
     const bound_track_parameters_collection_types::const_view& seeds) const {
 
     // Perform the track finding using the appropriate templated implementation.
-    return detector_buffer_magnetic_field_visitor<
-        detector_type_list, cuda::bfield_type_list<scalar>>(
-        det, field,
-        [&]<typename detector_t, typename bfield_view_t>(
-            const typename detector_t::view& detector,
-            const bfield_view_t& bfield) {
-            return details::combinatorial_kalman_filter<
-                typename detector_t::device>(detector, bfield, measurements,
-                                             seeds, m_config, m_mr, m_copy,
-                                             logger(), m_stream, m_warp_size);
-        });
+    output_type result{};
+    delegator().delegate([&]() {
+        result = detector_buffer_magnetic_field_visitor<
+            detector_type_list, cuda::bfield_type_list<scalar>>(
+            det, field,
+            [&]<typename detector_t, typename bfield_view_t>(
+                const typename detector_t::view& detector,
+                const bfield_view_t& bfield) {
+                return details::combinatorial_kalman_filter<
+                    typename detector_t::device>(detector, bfield, measurements,
+                                                 seeds, m_config, m_mr, m_copy,
+                                                 logger(), stream(),
+                                                 warp_size());
+            });
+    });
+    return result;
 }
 
 }  // namespace traccc::cuda

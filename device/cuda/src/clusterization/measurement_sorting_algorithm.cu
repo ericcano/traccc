@@ -24,6 +24,7 @@
 
 // System include(s).
 #include <memory_resource>
+#include <optional>
 
 namespace traccc::cuda {
 namespace kernels {
@@ -59,9 +60,9 @@ __global__ void fill_sorted_measurements(
 }  // namespace kernels
 
 measurement_sorting_algorithm::measurement_sorting_algorithm(
-    const traccc::memory_resource& mr, vecmem::copy& copy, stream& str,
-    std::unique_ptr<const Logger> logger)
-    : messaging(std::move(logger)), m_mr{mr}, m_copy{copy}, m_stream{str} {}
+    const traccc::memory_resource& mr, vecmem::copy& copy, cuda::stream& str,
+    thread_delegator& delegator, std::unique_ptr<const Logger> logger)
+    : messaging(std::move(logger)), algorithm_base(str, delegator), m_mr{mr}, m_copy{copy} {}
 
 measurement_sorting_algorithm::output_type
 measurement_sorting_algorithm::operator()(
@@ -73,8 +74,10 @@ measurement_sorting_algorithm::operator()(
         return {};
     }
 
+    std::optional<output_type> opt_result;
+    delegator().delegate([&]() {
     // Get a convenience variable for the stream that we'll be using.
-    cudaStream_t stream = details::get_stream(m_stream);
+    cudaStream_t stream = details::get_stream(this->stream());
     // Set up the Thrust execution policy.
     auto policy =
         thrust::cuda::par_nosync(std::pmr::polymorphic_allocator(&(m_mr.main)))
@@ -111,7 +114,9 @@ measurement_sorting_algorithm::operator()(
     TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
 
     // Return the sorted buffer.
-    return result;
+    opt_result = std::move(result);
+    });
+    return std::move(*opt_result);
 }
 
 }  // namespace traccc::cuda

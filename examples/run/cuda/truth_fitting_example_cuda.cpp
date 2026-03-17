@@ -136,7 +136,8 @@ int main(int argc, char* argv[]) {
     traccc::host::kalman_fitting_algorithm host_fitting(
         fit_cfg, host_mr, host_copy, logger().clone("HostFittingAlg"));
     traccc::cuda::kalman_fitting_algorithm device_fitting(
-        fit_cfg, mr, async_copy, stream, logger().clone("CudaFittingAlg"));
+        fit_cfg, mr, async_copy, stream, traccc::cuda::thread_delegator::get(),
+        logger().clone("CudaFittingAlg"));
 
     traccc::performance::timing_info elapsedTimes;
 

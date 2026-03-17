@@ -9,6 +9,7 @@
 #include "traccc/ambiguity_resolution/ambiguity_resolution_config.hpp"
 #include "traccc/ambiguity_resolution/greedy_ambiguity_resolution_algorithm.hpp"
 #include "traccc/cuda/ambiguity_resolution/greedy_ambiguity_resolution_algorithm.hpp"
+#include "traccc/cuda/utils/thread_delegator.hpp"
 #include "traccc/device/container_d2h_copy_alg.hpp"
 #include "traccc/device/container_h2d_copy_alg.hpp"
 #include "traccc/utils/memory_resource.hpp"
@@ -124,7 +125,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest0) {
         resolution_config;
 
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
     {
         resolution_alg_cuda.get_config().min_meas_per_track = 3;
         auto res_trk_cands_buffer = resolution_alg_cuda(
@@ -175,7 +177,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest1) {
         resolution_config;
 
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     resolution_alg_cuda.get_config().min_meas_per_track = 3;
     auto res_trk_cands_buffer = resolution_alg_cuda(
@@ -214,7 +217,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest2) {
     traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
         resolution_config;
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     auto res_trk_cands_buffer = resolution_alg_cuda(
         edm::track_container<default_algebra>::const_data(trk_cands));
@@ -254,7 +258,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest3) {
     traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
         resolution_config;
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     auto res_trk_cands_buffer = resolution_alg_cuda(
         edm::track_container<default_algebra>::const_data(trk_cands));
@@ -291,7 +296,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest5) {
     traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
         resolution_config;
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     auto res_trk_cands_buffer = resolution_alg_cuda(
         edm::track_container<default_algebra>::const_data(trk_cands));
@@ -329,7 +335,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest6) {
     traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
         resolution_config;
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     auto res_trk_cands_buffer = resolution_alg_cuda(
         edm::track_container<default_algebra>::const_data(trk_cands));
@@ -365,7 +372,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest7) {
     traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
         resolution_config;
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     auto res_trk_cands_buffer = resolution_alg_cuda(
         edm::track_container<default_algebra>::const_data(trk_cands));
@@ -402,7 +410,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest8) {
     traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
         resolution_config;
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     auto res_trk_cands_buffer = resolution_alg_cuda(
         edm::track_container<default_algebra>::const_data(trk_cands));
@@ -439,7 +448,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest9) {
     traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
         resolution_config;
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     auto res_trk_cands_buffer = resolution_alg_cuda(
         edm::track_container<default_algebra>::const_data(trk_cands));
@@ -476,7 +486,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest10) {
     traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
         resolution_config;
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     auto res_trk_cands_buffer = resolution_alg_cuda(
         edm::track_container<default_algebra>::const_data(trk_cands));
@@ -515,7 +526,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest11) {
     traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
         resolution_config;
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     auto res_trk_cands_buffer = resolution_alg_cuda(
         edm::track_container<default_algebra>::const_data(trk_cands));
@@ -550,7 +562,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest12) {
     traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
         resolution_config;
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     auto res_trk_cands_buffer = resolution_alg_cuda(
         edm::track_container<default_algebra>::const_data(trk_cands));
@@ -589,7 +602,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest13) {
     traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
         resolution_config;
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     auto res_trk_cands_buffer = resolution_alg_cuda(
         edm::track_container<default_algebra>::const_data(trk_cands));
@@ -629,7 +643,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest14) {
     traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
         resolution_config;
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     auto res_trk_cands_buffer = resolution_alg_cuda(
         edm::track_container<default_algebra>::const_data(trk_cands));
@@ -666,7 +681,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest15) {
     traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
         resolution_config;
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     auto res_trk_cands_buffer = resolution_alg_cuda(
         edm::track_container<default_algebra>::const_data(trk_cands));
@@ -704,7 +720,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest16) {
     traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
         resolution_config;
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     auto res_trk_cands_buffer = resolution_alg_cuda(
         edm::track_container<default_algebra>::const_data(trk_cands));
@@ -743,7 +760,8 @@ TEST(CUDAAmbiguitySolverTests, GreedyResolverTest17) {
     traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
         resolution_config;
     traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-        resolution_config, {mng_mr}, copy, stream);
+        resolution_config, {mng_mr}, copy, stream,
+        traccc::cuda::thread_delegator::get());
 
     auto res_trk_cands_buffer = resolution_alg_cuda(
         edm::track_container<default_algebra>::const_data(trk_cands));
@@ -850,7 +868,8 @@ TEST_P(CUDAGreedyResolutionCompareToCPU, Comparison) {
 
         // CUDA algorithm
         traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
-            resolution_config, mr, copy, stream);
+            resolution_config, mr, copy, stream,
+            traccc::cuda::thread_delegator::get());
 
         // H2D transfer
         edm::measurement_collection<default_algebra>::buffer
