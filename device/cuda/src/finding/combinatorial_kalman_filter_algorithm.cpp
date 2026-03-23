@@ -18,7 +18,7 @@ combinatorial_kalman_filter_algorithm::combinatorial_kalman_filter_algorithm(
     vecmem::copy& copy, cuda::stream& str, thread_delegator& delegator,
     std::unique_ptr<const Logger> logger)
     : messaging(std::move(logger)),
-      algorithm_base(str, delegator),
+      algorithm_base(mr, copy, str, delegator),
       m_config{config},
       m_mr{mr},
       m_copy{copy} {}

@@ -18,6 +18,9 @@
 #include "traccc/utils/memory_resource.hpp"
 #include "traccc/utils/messaging.hpp"
 
+// System include(s).
+#include <type_traits>
+
 namespace traccc::device {
 
 /// Algorithm forming space points out of measurements
@@ -25,24 +28,30 @@ namespace traccc::device {
 /// This algorithm performs the local-to-global transformation of the 2D (pixel)
 /// measurements made on every detector module, into 3D spacepoint coordinates.
 ///
+/// @tparam Base Platform-specific algorithm base class. Must inherit from
+///              @c traccc::device::algorithm_base (providing mr() and copy()).
+///
+template <class Base>
 class silicon_pixel_spacepoint_formation_algorithm
     : public algorithm<edm::spacepoint_collection::buffer(
           const detector_buffer&,
           const edm::measurement_collection<default_algebra>::const_view&)>,
       public messaging,
-      public algorithm_base {
+      public Base {
+
+    static_assert(std::is_base_of_v<algorithm_base, Base>,
+                  "Base must inherit from traccc::device::algorithm_base");
 
     public:
     /// Constructor for spacepoint_formation algorithm
     ///
-    /// @param mr The memory resource(s) to use in the algorithm
-    /// @param copy The copy object to use for copying data between device
-    ///             and host memory blocks
+    /// @param base   The fully constructed platform base object
     /// @param logger The logger instance to use
     ///
     silicon_pixel_spacepoint_formation_algorithm(
-        const traccc::memory_resource& mr, vecmem::copy& copy,
-        std::unique_ptr<const Logger> logger = getDummyLogger().clone());
+        Base&& base,
+        std::unique_ptr<const Logger> logger = getDummyLogger().clone())
+        : messaging(std::move(logger)), Base(std::move(base)) {}
 
     /// Construct spacepoints from 2D silicon pixel measurements
     ///
@@ -54,7 +63,40 @@ class silicon_pixel_spacepoint_formation_algorithm
     output_type operator()(
         const detector_buffer& det,
         const edm::measurement_collection<default_algebra>::const_view&
-            measurements) const override;
+            measurements) const override {
+
+        // Get the number of measurements. In an asynchronous way if possible.
+        edm::measurement_collection<default_algebra>::const_view::size_type
+            n_measurements = 0u;
+        if (this->mr().host) {
+            vecmem::async_size size =
+                this->copy().get_size(measurements, *(this->mr().host));
+            // Here we could give control back to the caller, once our code allows
+            // for it. (coroutines...)<-WIP
+            await();
+            n_measurements = size.get();
+        } else {
+            n_measurements = this->copy().get_size(measurements);
+        }
+
+        // If there are no measurements, return right away.
+        if (n_measurements == 0) {
+            return {};
+        }
+
+        // Create the result buffer.
+        edm::spacepoint_collection::buffer spacepoints(
+            n_measurements, this->mr().main,
+            vecmem::data::buffer_type::resizable);
+        this->copy().setup(spacepoints)->ignore();
+
+        // Launch the spacepoint formation kernel.
+        form_spacepoints_kernel(
+            {n_measurements, det, measurements, spacepoints});
+
+        // Return the reconstructed spacepoints.
+        return spacepoints;
+    }
 
     protected:
     /// @name Function(s) to be implemented by derived classes

@@ -27,8 +27,9 @@ clusterization_algorithm::clusterization_algorithm(
     thread_delegator& delegator, const config_type& config,
     std::unique_ptr<const Logger> logger,
     await_function_t await_func)
-    : device::clusterization_algorithm(mr, copy, config, std::move(logger)),
-      cuda::algorithm_base(str, delegator),
+    : device::clusterization_algorithm<cuda::algorithm_base>(
+          cuda::algorithm_base(mr, copy, str, delegator), config,
+          std::move(logger)),
       m_await_function(await_func) {}
 
 bool clusterization_algorithm::input_is_valid(

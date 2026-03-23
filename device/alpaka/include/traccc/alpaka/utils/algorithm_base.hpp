@@ -7,8 +7,15 @@
 
 #pragma once
 
+// Project include(s).
+#include "traccc/device/algorithm_base.hpp"
+#include "traccc/utils/memory_resource.hpp"
+
 // Local include(s).
 #include "traccc/alpaka/utils/queue.hpp"
+
+// VecMem include(s).
+#include <vecmem/utils/copy.hpp>
 
 // System include(s).
 #include <cstddef>
@@ -19,15 +26,20 @@ namespace traccc::alpaka {
 /// Base class for all Alpaka algorithms
 ///
 /// Holding on to data that all Alpaka algorithms make use of.
+/// Inherits from @c traccc::device::algorithm_base so that memory resources
+/// and copy objects are available to the common device algorithm layer.
 ///
-class algorithm_base {
+class algorithm_base : public device::algorithm_base {
 
     public:
     /// Constructor
     ///
-    /// @param q The Alpaka queue to perform the operations in
+    /// @param mr  The memory resource(s) to use
+    /// @param copy The copy object to use
+    /// @param q   The Alpaka queue to perform the operations in
     ///
-    explicit algorithm_base(alpaka::queue& q);
+    explicit algorithm_base(const traccc::memory_resource& mr,
+                            vecmem::copy& copy, alpaka::queue& q);
 
     /// Get the Alpaka queue of the algorithm
     alpaka::queue& queue() const;

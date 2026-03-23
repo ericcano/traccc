@@ -21,9 +21,8 @@ seed_parameter_estimation_algorithm::seed_parameter_estimation_algorithm(
     const track_params_estimation_config& config,
     const traccc::memory_resource& mr, vecmem::copy& copy, queue_wrapper& queue,
     std::unique_ptr<const Logger> logger)
-    : device::seed_parameter_estimation_algorithm(config, mr, copy,
-                                                  std::move(logger)),
-      sycl::algorithm_base(queue) {}
+    : device::seed_parameter_estimation_algorithm<sycl::algorithm_base>(
+          config, sycl::algorithm_base(mr, copy, queue), std::move(logger)) {}
 
 void seed_parameter_estimation_algorithm::estimate_seed_params_kernel(
     const struct estimate_seed_params_kernel_payload& payload) const {

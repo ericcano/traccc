@@ -17,8 +17,7 @@ namespace traccc::alpaka {
 
 /// Algorithm for estimating track parameters for seeds using Alpaka
 struct seed_parameter_estimation_algorithm
-    : public device::seed_parameter_estimation_algorithm,
-      public alpaka::algorithm_base {
+    : public device::seed_parameter_estimation_algorithm<alpaka::algorithm_base> {
 
     public:
     /// Constructor for track_params_estimation

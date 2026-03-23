@@ -89,8 +89,8 @@ struct reify_cluster_data {
 clusterization_algorithm::clusterization_algorithm(
     const traccc::memory_resource& mr, vecmem::copy& copy, alpaka::queue& q,
     const config_type& config, std::unique_ptr<const Logger> logger)
-    : device::clusterization_algorithm(mr, copy, config, std::move(logger)),
-      alpaka::algorithm_base(q) {}
+    : device::clusterization_algorithm<alpaka::algorithm_base>(
+          alpaka::algorithm_base(mr, copy, q), config, std::move(logger)) {}
 
 bool clusterization_algorithm::input_is_valid(
     const edm::silicon_cell_collection::const_view&) const {

@@ -38,9 +38,8 @@ silicon_pixel_spacepoint_formation_algorithm::
         const traccc::memory_resource& mr, vecmem::copy& copy,
         cuda::stream& str, thread_delegator& delegator,
         std::unique_ptr<const Logger> logger, await_function_t await_func)
-    : device::silicon_pixel_spacepoint_formation_algorithm(mr, copy,
-                                                           std::move(logger)),
-      cuda::algorithm_base(str, delegator),
+    : device::silicon_pixel_spacepoint_formation_algorithm<cuda::algorithm_base>(
+          cuda::algorithm_base(mr, copy, str, delegator), std::move(logger)),
       m_await_function(await_func) {}
 
 void silicon_pixel_spacepoint_formation_algorithm::form_spacepoints_kernel(

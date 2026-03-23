@@ -16,8 +16,8 @@
 namespace traccc::alpaka {
 
 /// Main algorithm for performing the track seeding using Alpaka
-class triplet_seeding_algorithm : public device::triplet_seeding_algorithm,
-                                  public alpaka::algorithm_base {
+class triplet_seeding_algorithm
+    : public device::triplet_seeding_algorithm<alpaka::algorithm_base> {
 
     public:
     /// Constructor for the seed finding algorithm

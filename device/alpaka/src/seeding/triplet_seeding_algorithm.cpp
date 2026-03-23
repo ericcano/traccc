@@ -225,10 +225,9 @@ triplet_seeding_algorithm::triplet_seeding_algorithm(
     const spacepoint_grid_config& grid_config,
     const seedfilter_config& filter_config, const traccc::memory_resource& mr,
     vecmem::copy& copy, alpaka::queue& q, std::unique_ptr<const Logger> logger)
-    : device::triplet_seeding_algorithm(finder_config, grid_config,
-                                        filter_config, mr, copy,
-                                        std::move(logger)),
-      alpaka::algorithm_base{q} {}
+    : device::triplet_seeding_algorithm<alpaka::algorithm_base>(
+          alpaka::algorithm_base(mr, copy, q), finder_config, grid_config,
+          filter_config, std::move(logger)) {}
 
 void triplet_seeding_algorithm::count_grid_capacities_kernel(
     const count_grid_capacities_kernel_payload& payload) const {

@@ -21,8 +21,8 @@ namespace traccc::cuda {
 /// measurements made on every detector module, into 3D spacepoint coordinates.
 ///
 class silicon_pixel_spacepoint_formation_algorithm
-    : public device::silicon_pixel_spacepoint_formation_algorithm,
-      public cuda::algorithm_base {
+    : public device::silicon_pixel_spacepoint_formation_algorithm<
+          cuda::algorithm_base> {
 
     public:
     /// Constructor for the spacepoint formation algorithm

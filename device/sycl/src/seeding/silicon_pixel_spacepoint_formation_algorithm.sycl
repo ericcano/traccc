@@ -21,9 +21,8 @@ silicon_pixel_spacepoint_formation_algorithm::
     silicon_pixel_spacepoint_formation_algorithm(
         const traccc::memory_resource& mr, vecmem::copy& copy,
         queue_wrapper& queue, std::unique_ptr<const Logger> logger)
-    : device::silicon_pixel_spacepoint_formation_algorithm(mr, copy,
-                                                           std::move(logger)),
-      sycl::algorithm_base(queue) {}
+    : device::silicon_pixel_spacepoint_formation_algorithm<sycl::algorithm_base>(
+          sycl::algorithm_base(mr, copy, queue), std::move(logger)) {}
 
 void silicon_pixel_spacepoint_formation_algorithm::form_spacepoints_kernel(
     const form_spacepoints_kernel_payload& payload) const {

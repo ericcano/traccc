@@ -167,10 +167,9 @@ triplet_seeding_algorithm::triplet_seeding_algorithm(
     const seedfilter_config& filter_config, const traccc::memory_resource& mr,
     vecmem::copy& copy, cuda::stream& str, thread_delegator& delegator,
     std::unique_ptr<const Logger> logger, await_function_t await_func)
-    : device::triplet_seeding_algorithm(finder_config, grid_config,
-                                        filter_config, mr, copy,
-                                        std::move(logger)),
-      cuda::algorithm_base{str, delegator},
+    : device::triplet_seeding_algorithm<cuda::algorithm_base>(
+          cuda::algorithm_base(mr, copy, str, delegator), finder_config,
+          grid_config, filter_config, std::move(logger)),
       m_await_function(await_func) {}
 
 void triplet_seeding_algorithm::count_grid_capacities_kernel(

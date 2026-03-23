@@ -11,8 +11,10 @@
 
 namespace traccc::sycl {
 
-algorithm_base::algorithm_base(queue_wrapper& queue)
-    : m_queue(queue),
+algorithm_base::algorithm_base(const traccc::memory_resource& mr,
+                               vecmem::copy& copy, queue_wrapper& queue)
+    : device::algorithm_base(mr, copy),
+      m_queue(queue),
       m_warp_size(static_cast<unsigned int>(
           details::get_queue(queue)
               .get_device()

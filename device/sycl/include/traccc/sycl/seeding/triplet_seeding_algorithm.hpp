@@ -16,8 +16,8 @@
 namespace traccc::sycl {
 
 /// Main algorithm for performing the track seeding using oneAPI/SYCL
-class triplet_seeding_algorithm : public device::triplet_seeding_algorithm,
-                                  public sycl::algorithm_base {
+class triplet_seeding_algorithm
+    : public device::triplet_seeding_algorithm<sycl::algorithm_base> {
 
     public:
     /// Constructor for the seed finding algorithm

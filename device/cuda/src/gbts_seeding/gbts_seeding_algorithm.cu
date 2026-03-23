@@ -119,7 +119,7 @@ gbts_seeding_algorithm::gbts_seeding_algorithm(
     vecmem::copy& copy, cuda::stream& str, thread_delegator& delegator,
     std::unique_ptr<const Logger> logger)
     : messaging(logger->clone()),
-      algorithm_base(str, delegator),
+      algorithm_base(mr, copy, str, delegator),
       m_config(cfg),
       m_mr(mr),
       m_copy(copy) {}

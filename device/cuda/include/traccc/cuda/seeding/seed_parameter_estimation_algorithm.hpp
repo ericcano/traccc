@@ -17,8 +17,7 @@ namespace traccc::cuda {
 
 /// Algorithm for estimating track parameters for seeds using CUDA
 struct seed_parameter_estimation_algorithm
-    : public device::seed_parameter_estimation_algorithm,
-      public cuda::algorithm_base {
+    : public device::seed_parameter_estimation_algorithm<cuda::algorithm_base> {
 
     public:
     /// Constructor for track_params_estimation

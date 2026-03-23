@@ -7,9 +7,16 @@
 
 #pragma once
 
+// Project include(s).
+#include "traccc/device/algorithm_base.hpp"
+#include "traccc/utils/memory_resource.hpp"
+
 // Local include(s).
 #include "traccc/cuda/utils/stream.hpp"
 #include "traccc/cuda/utils/thread_delegator.hpp"
+
+// VecMem include(s).
+#include <vecmem/utils/copy.hpp>
 
 // System include(s).
 #include <functional>
@@ -19,16 +26,22 @@ namespace traccc::cuda {
 /// Base class for all CUDA algorithms
 ///
 /// Holding on to data that all CUDA algorithms make use of.
+/// Inherits from @c traccc::device::algorithm_base so that memory resources
+/// and copy objects are available to the common device algorithm layer.
 ///
-class algorithm_base {
+class algorithm_base : public device::algorithm_base {
 
     public:
     /// Constructor for the algorithm base
     ///
-    /// @param str The CUDA stream to perform all operations on
-    /// @param delegator The thread delegator to use for delegating tasks to a single thread
+    /// @param mr         The memory resource(s) to use
+    /// @param copy       The copy object to use
+    /// @param str        The CUDA stream to perform all operations on
+    /// @param delegator  The thread delegator to use for delegating tasks to a single thread
     ///
-    explicit algorithm_base(cuda::stream& str, thread_delegator& delegator);
+    explicit algorithm_base(const traccc::memory_resource& mr,
+                            vecmem::copy& copy, cuda::stream& str,
+                            thread_delegator& delegator);
 
     /// Get the CUDA stream of the algorithm
     cuda::stream& stream() const;

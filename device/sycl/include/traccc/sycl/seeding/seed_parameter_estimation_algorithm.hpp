@@ -17,8 +17,7 @@ namespace traccc::sycl {
 
 /// Algorithm for estimating track parameters for seeds using oneAPI/SYCL
 struct seed_parameter_estimation_algorithm
-    : public device::seed_parameter_estimation_algorithm,
-      public sycl::algorithm_base {
+    : public device::seed_parameter_estimation_algorithm<sycl::algorithm_base> {
 
     public:
     /// Constructor for track_params_estimation

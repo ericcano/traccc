@@ -15,8 +15,10 @@
 
 namespace traccc::alpaka {
 
-algorithm_base::algorithm_base(alpaka::queue& q)
-    : m_queue(q),
+algorithm_base::algorithm_base(const traccc::memory_resource& mr,
+                               vecmem::copy& copy, alpaka::queue& q)
+    : device::algorithm_base(mr, copy),
+      m_queue(q),
       m_warp_size(static_cast<unsigned int>(::alpaka::getPreferredWarpSize(
           ::alpaka::getDev(details::get_queue(q))))) {}
 

@@ -36,8 +36,8 @@ class reify_cluster_data;
 clusterization_algorithm::clusterization_algorithm(
     const traccc::memory_resource& mr, vecmem::copy& copy, queue_wrapper& queue,
     const config_type& config, std::unique_ptr<const Logger> logger)
-    : device::clusterization_algorithm(mr, copy, config, std::move(logger)),
-      sycl::algorithm_base(queue) {}
+    : device::clusterization_algorithm<sycl::algorithm_base>(
+          sycl::algorithm_base(mr, copy, queue), config, std::move(logger)) {}
 
 bool clusterization_algorithm::input_is_valid(
     const edm::silicon_cell_collection::const_view& cells) const {

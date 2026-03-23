@@ -26,8 +26,8 @@ namespace traccc::cuda {
 /// This algorithm returns a buffer which is not necessarily filled yet. A
 /// synchronisation statement is required before destroying the buffer.
 ///
-class clusterization_algorithm : public device::clusterization_algorithm,
-                                 public algorithm_base {
+class clusterization_algorithm
+    : public device::clusterization_algorithm<algorithm_base> {
 
     public:
     /// Constructor for clusterization algorithm

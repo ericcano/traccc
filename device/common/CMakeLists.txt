@@ -36,7 +36,6 @@ traccc_add_library( traccc_device_common device_common
    "include/traccc/clusterization/device/ccl_kernel.hpp"
    "include/traccc/clusterization/device/sorting_index_filler.hpp"
    "include/traccc/clusterization/device/clusterization_algorithm.hpp"
-   "src/clusterization/clusterization_algorithm.cpp"
    # Spacepoint binning function(s).
    "include/traccc/seeding/device/count_grid_capacities.hpp"
    "include/traccc/seeding/device/impl/count_grid_capacities.ipp"
@@ -60,11 +59,8 @@ traccc_add_library( traccc_device_common device_common
    "include/traccc/seeding/device/select_seeds.hpp"
    "include/traccc/seeding/device/impl/select_seeds.ipp"
    "include/traccc/seeding/device/triplet_seeding_algorithm.hpp"
-   "src/seeding/triplet_seeding_algorithm.cpp"
    "include/traccc/seeding/device/silicon_pixel_spacepoint_formation_algorithm.hpp"
-   "src/seeding/silicon_pixel_spacepoint_formation_algorithm.cpp"
    "include/traccc/seeding/device/seed_parameter_estimation_algorithm.hpp"
-   "src/seeding/seed_parameter_estimation_algorithm.cpp"
    # Track parameters estimation function(s).
    "include/traccc/seeding/device/estimate_track_params.hpp"
    "include/traccc/seeding/device/impl/estimate_track_params.ipp"

@@ -20,8 +20,8 @@ namespace traccc::cuda {
 /// This algorithm returns a buffer which is not necessarily filled yet. A
 /// synchronisation statement is required before destroying this buffer.
 ///
-class triplet_seeding_algorithm : public device::triplet_seeding_algorithm,
-                                  public cuda::algorithm_base {
+class triplet_seeding_algorithm
+    : public device::triplet_seeding_algorithm<cuda::algorithm_base> {
 
     public:
     /// Constructor for the seed finding algorithm

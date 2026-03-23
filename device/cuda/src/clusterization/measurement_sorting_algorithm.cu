@@ -62,7 +62,7 @@ __global__ void fill_sorted_measurements(
 measurement_sorting_algorithm::measurement_sorting_algorithm(
     const traccc::memory_resource& mr, vecmem::copy& copy, cuda::stream& str,
     thread_delegator& delegator, std::unique_ptr<const Logger> logger)
-    : messaging(std::move(logger)), algorithm_base(str, delegator), m_mr{mr}, m_copy{copy} {}
+    : messaging(std::move(logger)), algorithm_base(mr, copy, str, delegator), m_mr{mr}, m_copy{copy} {}
 
 measurement_sorting_algorithm::output_type
 measurement_sorting_algorithm::operator()(
