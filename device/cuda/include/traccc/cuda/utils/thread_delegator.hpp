@@ -23,7 +23,15 @@ namespace traccc::cuda {
   /// the lambda in the caller thread.
   class thread_delegator {
     public:
+    /// Delegate a function to be executed in a single thread (or immediately, depending on the strategy). 
+    /// The caller may block or suspend until the function finishes, depending on the strategy.
     virtual void delegate(std::function<void()> func)  {
+      func();
+    }
+    /// Delegate a function to be executed in a single thread (or immediately, depending on the strategy). 
+    /// The caller does not block. This allow implementations of delegated callback launches during
+    /// await() calls.
+    virtual void delegateAsync(std::function<void()> func) {
       func();
     }
     virtual ~thread_delegator() = default;
@@ -43,6 +51,10 @@ namespace traccc::cuda {
       m_arena.enqueue([this, func](){
           m_group.run([this, func]() { try { func(); } catch (...) {}});
       });
+    }
+
+    void delegateAsync(std::function<void()> func) override {
+      delegate(func);
     }
 
     ~single_threaded_delegator_fire_and_forget() noexcept override {
@@ -94,6 +106,12 @@ namespace traccc::cuda {
       if (eptr) {
         std::rethrow_exception(eptr);
       }
+    }
+
+    void delegateAsync(std::function<void()> func) override {
+      m_arena.enqueue([this, func](){
+          m_group.run(func);
+      });
     }
 
     ~single_threaded_delegator_sync() noexcept override{
@@ -170,6 +188,12 @@ namespace traccc::cuda {
       if (eptr) {
         std::rethrow_exception(eptr);
       }
+    }
+
+    void delegateAsync(std::function<void()> func) override {
+      m_arena.enqueue([this, func](){
+          m_group.run(func);
+      });
     }
 
     ~single_threaded_delegator_suspend() noexcept override {
