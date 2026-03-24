@@ -86,8 +86,10 @@ void algorithm_base::await() const {
             tbb::task::suspend([&suspend_point, this](auto tag) {
                 suspend_point = tag;
                 auto s = reinterpret_cast<cudaStream_t>(stream().cudaStream());
-                CUDA_ERROR_CHECK(
-                    cudaLaunchHostFunc(s, tbb_await_callback, &suspend_point));
+                delegator().delegateAsync([s, &suspend_point]() {
+                    CUDA_ERROR_CHECK(
+                        cudaLaunchHostFunc(s, tbb_await_callback, &suspend_point));
+                });
             });
             CUDA_ERROR_CHECK(cudaGetLastError());
             break;
