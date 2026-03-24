@@ -38,9 +38,9 @@ seed_parameter_estimation_algorithm::seed_parameter_estimation_algorithm(
     const track_params_estimation_config& config,
     const traccc::memory_resource& mr, vecmem::copy& copy, cuda::stream& str,
     thread_delegator& delegator, 
-    std::unique_ptr<const Logger> logger, await_function_t await_func)
+    std::unique_ptr<const Logger> logger, traccc::await_strategy strategy)
     : device::seed_parameter_estimation_algorithm<cuda::algorithm_base>(
-          config, cuda::algorithm_base(mr, copy, str, delegator, await_func),
+          config, cuda::algorithm_base(mr, copy, str, delegator, strategy),
           std::move(logger)) {}
 
 void seed_parameter_estimation_algorithm::estimate_seed_params_kernel(

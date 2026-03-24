@@ -31,10 +31,6 @@ traccc_add_executable( truth_fitting_example_cuda "truth_fitting_example_cuda.cp
 # Set up the "throughput applications".
 #
 add_library( traccc_examples_cuda STATIC
-   "tbb_await.hpp"
-   "tbb_await.cpp"
-   "boost_fiber_await.hpp"
-   "boost_fiber_await.cpp"
    "full_chain_algorithm.hpp"
    "full_chain_algorithm.cpp" )
 target_link_libraries( traccc_examples_cuda

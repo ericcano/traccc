@@ -254,6 +254,7 @@ endif()
 
 target_link_libraries( traccc_cuda
   PUBLIC traccc::core traccc::cuda_utils detray::core vecmem::core TBB::tbb
+         Boost::fiber
   PRIVATE CUDA::cudart traccc::device_common vecmem::cuda covfie::cuda )
 
 # Set up Thrust specifically for the traccc::cuda library.

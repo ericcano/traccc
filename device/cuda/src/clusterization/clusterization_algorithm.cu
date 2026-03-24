@@ -26,9 +26,9 @@ clusterization_algorithm::clusterization_algorithm(
     const traccc::memory_resource& mr, vecmem::copy& copy, cuda::stream& str,
     thread_delegator& delegator, const config_type& config,
     std::unique_ptr<const Logger> logger,
-    await_function_t await_func)
+    traccc::await_strategy strategy)
     : device::clusterization_algorithm<cuda::algorithm_base>(
-          cuda::algorithm_base(mr, copy, str, delegator, await_func), config,
+          cuda::algorithm_base(mr, copy, str, delegator, strategy), config,
           std::move(logger)) {}
 
 bool clusterization_algorithm::input_is_valid(

@@ -58,6 +58,7 @@ traccc_add_library( traccc_core core TYPE SHARED
   "include/traccc/geometry/silicon_detector_description.hpp"
   # Utilities.
   "include/traccc/utils/algorithm.hpp"
+  "include/traccc/utils/await_strategy.hpp"
   "include/traccc/utils/type_traits.hpp"
   "include/traccc/utils/memory_resource.hpp"
   "include/traccc/utils/seed_generator.hpp"

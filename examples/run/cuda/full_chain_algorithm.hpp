@@ -8,7 +8,6 @@
 #pragma once
 
 // Project includes(s).
-#include "../common/await_strategy.hpp"
 #include "../common/thread_delegation_strategy.hpp"
 
 // Project include(s).
@@ -45,15 +44,6 @@
 #include <memory>
 
 namespace traccc::cuda {
-
-class await_strategy_helper {
-    public:
-    await_strategy_helper(await_strategy await_mode = await_strategy::sync);
-    await_function_t get_await_function() const noexcept;
-
-    private:
-    await_function_t m_await = default_await_function;
-};
 
 class thread_delegation_strategy_helper {
     public:
@@ -109,7 +99,7 @@ class full_chain_algorithm
         const silicon_detector_description::host& det_descr,
         const magnetic_field& field, host_detector* detector,
         std::unique_ptr<const traccc::Logger> logger,
-        await_strategy_helper await_func_helper = await_strategy_helper(),
+        traccc::await_strategy await_mode = traccc::await_strategy::sync,
         thread_delegation_strategy thread_delegation_mode = thread_delegation_strategy::immediate);
 
     /// Copy constructor
@@ -142,8 +132,8 @@ class full_chain_algorithm
         const edm::silicon_cell_collection::host& cells) const;
 
     private:
-    // The await function to use
-    await_function_t m_await_function;
+    // The await strategy to use
+    traccc::await_strategy m_await_strategy;
 
     /// Host memory resource
     vecmem::memory_resource& m_host_mr;

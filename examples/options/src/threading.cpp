@@ -8,6 +8,7 @@
 // Local include(s).
 #include "traccc/options/threading.hpp"
 
+
 #include "traccc/examples/utils/printable.hpp"
 
 // System include(s).

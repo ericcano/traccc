@@ -32,13 +32,13 @@ class silicon_pixel_spacepoint_formation_algorithm
     ///             and host memory blocks
     /// @param str The CUDA stream to use
     /// @param logger The logger instance to use
-    /// @param await_func The function used to await completion of work
+    /// @param strategy   The await strategy to use for suspending execution
     ///
     silicon_pixel_spacepoint_formation_algorithm(
         const traccc::memory_resource& mr, vecmem::copy& copy,
         cuda::stream& str, thread_delegator& delegator,
         std::unique_ptr<const Logger> logger = getDummyLogger().clone(),
-        await_function_t await_func = default_await_function);
+        traccc::await_strategy strategy = traccc::await_strategy::sync);
 
     private:
     /// @name Function(s) inherited from

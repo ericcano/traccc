@@ -12,6 +12,7 @@
 #include "traccc/utils/memory_resource.hpp"
 
 // Local include(s).
+#include "traccc/utils/await_strategy.hpp"
 #include "traccc/cuda/utils/stream.hpp"
 #include "traccc/cuda/utils/thread_delegator.hpp"
 
@@ -22,10 +23,6 @@
 #include <functional>
 
 namespace traccc::cuda {
-
-using await_function_t = void (*)(const cuda::stream&);
-
-void default_await_function(const cuda::stream& stream);
 
 /// Base class for all CUDA algorithms
 ///
@@ -42,12 +39,12 @@ class algorithm_base : public device::algorithm_base {
     /// @param copy       The copy object to use
     /// @param str        The CUDA stream to perform all operations on
     /// @param delegator  The thread delegator to use for delegating tasks to a single thread
-    /// @param await_func The function used to await completion of work
+    /// @param strategy   The await strategy to use for suspending execution
     ///
     explicit algorithm_base(const traccc::memory_resource& mr,
                             vecmem::copy& copy, cuda::stream& str,
                             thread_delegator& delegator,
-                            await_function_t await_func = default_await_function);
+                            traccc::await_strategy strategy = traccc::await_strategy::sync);
 
     /// Get the CUDA stream of the algorithm
     cuda::stream& stream() const;
@@ -65,8 +62,8 @@ class algorithm_base : public device::algorithm_base {
     std::reference_wrapper<thread_delegator> m_delegator;
     /// Warp size of the GPU being used
     unsigned int m_warp_size;
-    /// The function used to await completion of work
-    await_function_t m_await_function;
+    /// The await strategy to use for suspending execution
+    traccc::await_strategy m_await_strategy;
 
 };  // class algorithm_base
 
