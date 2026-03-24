@@ -40,9 +40,8 @@ seed_parameter_estimation_algorithm::seed_parameter_estimation_algorithm(
     thread_delegator& delegator, 
     std::unique_ptr<const Logger> logger, await_function_t await_func)
     : device::seed_parameter_estimation_algorithm<cuda::algorithm_base>(
-          config, cuda::algorithm_base(mr, copy, str, delegator),
-          std::move(logger)),
-      m_await_function(await_func) {}
+          config, cuda::algorithm_base(mr, copy, str, delegator, await_func),
+          std::move(logger)) {}
 
 void seed_parameter_estimation_algorithm::estimate_seed_params_kernel(
     const struct estimate_seed_params_kernel_payload& payload) const {
@@ -61,9 +60,5 @@ void seed_parameter_estimation_algorithm::estimate_seed_params_kernel(
         TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
     });
 
-}
-
-void seed_parameter_estimation_algorithm::await() const {
-    m_await_function(stream());
 }
 }  // namespace traccc::cuda

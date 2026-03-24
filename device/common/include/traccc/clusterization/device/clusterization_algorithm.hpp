@@ -193,9 +193,6 @@ class clusterization_algorithm
 
     /// @}
 
-    /// Possibly suspend execution until all asynchronous operations are done
-    virtual void await() const = 0;
-
     private:
     /// Main algorithmic implementation of the clusterization algorithm
     std::pair<edm::measurement_collection<default_algebra>::buffer,
@@ -222,7 +219,7 @@ class clusterization_algorithm
             
             // Here we could give control back to the caller, once our code allows
             // for it. (coroutines...)<-WIP
-            await();
+            this->await();
             num_cells = size.get();
         } else {
             num_cells = this->copy().get_size(cells);
@@ -280,7 +277,7 @@ class clusterization_algorithm
                     this->copy().get_size(measurements, *(this->mr().host));
                 // Here we could give control back to the caller, once our code
                 // allows for it. (coroutines...)<-WIP
-                await();
+                this->await();
                 num_measurements = size.get();
             } else {
                 num_measurements = this->copy().get_size(measurements);

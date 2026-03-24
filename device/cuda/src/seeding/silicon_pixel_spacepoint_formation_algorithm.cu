@@ -39,8 +39,7 @@ silicon_pixel_spacepoint_formation_algorithm::
         cuda::stream& str, thread_delegator& delegator,
         std::unique_ptr<const Logger> logger, await_function_t await_func)
     : device::silicon_pixel_spacepoint_formation_algorithm<cuda::algorithm_base>(
-          cuda::algorithm_base(mr, copy, str, delegator), std::move(logger)),
-      m_await_function(await_func) {}
+          cuda::algorithm_base(mr, copy, str, delegator, await_func), std::move(logger)) {}
 
 void silicon_pixel_spacepoint_formation_algorithm::form_spacepoints_kernel(
     const form_spacepoints_kernel_payload& payload) const {
@@ -59,10 +58,6 @@ void silicon_pixel_spacepoint_formation_algorithm::form_spacepoints_kernel(
         TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
     });
 
-}
-
-void silicon_pixel_spacepoint_formation_algorithm::await() const {
-    m_await_function(stream());
 }
 
 }  // namespace traccc::cuda

@@ -23,6 +23,10 @@
 
 namespace traccc::cuda {
 
+using await_function_t = void (*)(const cuda::stream&);
+
+void default_await_function(const cuda::stream& stream);
+
 /// Base class for all CUDA algorithms
 ///
 /// Holding on to data that all CUDA algorithms make use of.
@@ -38,10 +42,12 @@ class algorithm_base : public device::algorithm_base {
     /// @param copy       The copy object to use
     /// @param str        The CUDA stream to perform all operations on
     /// @param delegator  The thread delegator to use for delegating tasks to a single thread
+    /// @param await_func The function used to await completion of work
     ///
     explicit algorithm_base(const traccc::memory_resource& mr,
                             vecmem::copy& copy, cuda::stream& str,
-                            thread_delegator& delegator);
+                            thread_delegator& delegator,
+                            await_function_t await_func = default_await_function);
 
     /// Get the CUDA stream of the algorithm
     cuda::stream& stream() const;
@@ -49,6 +55,8 @@ class algorithm_base : public device::algorithm_base {
     thread_delegator& delegator() const;
     /// Get the warp size of the GPU being used
     unsigned int warp_size() const;
+    /// Possibly suspend execution until all asynchronous operations are done
+    void await() const;
 
     private:
     /// The CUDA stream to use
@@ -57,11 +65,9 @@ class algorithm_base : public device::algorithm_base {
     std::reference_wrapper<thread_delegator> m_delegator;
     /// Warp size of the GPU being used
     unsigned int m_warp_size;
+    /// The function used to await completion of work
+    await_function_t m_await_function;
 
 };  // class algorithm_base
-
-using await_function_t = void (*)(const cuda::stream&);
-
-void default_await_function(const cuda::stream& stream);
 
 }  // namespace traccc::cuda

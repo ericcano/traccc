@@ -74,11 +74,6 @@ class clusterization_algorithm
 
     /// @}
 
-    void await() const override;
-
-    private:
-    await_function_t m_await_function;
-
 };  // class clusterization_algorithm
 
 }  // namespace traccc::cuda

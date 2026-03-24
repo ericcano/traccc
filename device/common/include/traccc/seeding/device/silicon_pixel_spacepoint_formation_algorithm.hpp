@@ -73,7 +73,7 @@ class silicon_pixel_spacepoint_formation_algorithm
                 this->copy().get_size(measurements, *(this->mr().host));
             // Here we could give control back to the caller, once our code allows
             // for it. (coroutines...)<-WIP
-            await();
+            this->await();
             n_measurements = size.get();
         } else {
             n_measurements = this->copy().get_size(measurements);
@@ -124,9 +124,6 @@ class silicon_pixel_spacepoint_formation_algorithm
         const form_spacepoints_kernel_payload& payload) const = 0;
 
     /// @}
-
-    /// Possibly suspend execution until all asynchronous operations are done
-    virtual void await() const = 0;
 
 };  // class silicon_pixel_spacepoint_formation_algorithm
 

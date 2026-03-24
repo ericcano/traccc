@@ -42,6 +42,13 @@ class algorithm_base {
     /// The copy object to use in the algorithm (const)
     const vecmem::copy& copy() const;
 
+    /// Possibly suspend execution until all asynchronous operations are done
+    ///
+    /// No-op by default. Architecture-specific base classes override this to
+    /// synchronise the underlying device queue/stream.
+    ///
+    virtual void await() const {}
+
     private:
     /// Memory resource(s) to use in the algorithm
     memory_resource m_mr;

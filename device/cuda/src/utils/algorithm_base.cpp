@@ -14,11 +14,13 @@ namespace traccc::cuda {
 
 algorithm_base::algorithm_base(const traccc::memory_resource& mr,
                                vecmem::copy& copy, cuda::stream& str,
-                               thread_delegator& delegator)
+                               thread_delegator& delegator,
+                               await_function_t await_func)
     : device::algorithm_base(mr, copy),
       m_stream(str),
       m_delegator(delegator),
-      m_warp_size(details::get_warp_size(str.device())) {}
+      m_warp_size(details::get_warp_size(str.device())),
+      m_await_function(await_func) {}
 
 cuda::stream& algorithm_base::stream() const {
 
@@ -38,6 +40,10 @@ unsigned int algorithm_base::warp_size() const {
 void default_await_function(const cuda::stream& stream) {
 
     stream.synchronize();
+}
+
+void algorithm_base::await() const {
+    m_await_function(stream());
 }
 
 }  // namespace traccc::cuda

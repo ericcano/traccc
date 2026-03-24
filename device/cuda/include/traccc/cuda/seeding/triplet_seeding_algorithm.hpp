@@ -110,11 +110,6 @@ class triplet_seeding_algorithm
 
     /// @}
 
-    void await() const override;
-
-    private:
-    await_function_t m_await_function;
-
 };  // class triplet_seeding_algorithm
 
 }  // namespace traccc::cuda

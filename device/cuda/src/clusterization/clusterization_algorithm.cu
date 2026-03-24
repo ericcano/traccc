@@ -28,9 +28,8 @@ clusterization_algorithm::clusterization_algorithm(
     std::unique_ptr<const Logger> logger,
     await_function_t await_func)
     : device::clusterization_algorithm<cuda::algorithm_base>(
-          cuda::algorithm_base(mr, copy, str, delegator), config,
-          std::move(logger)),
-      m_await_function(await_func) {}
+          cuda::algorithm_base(mr, copy, str, delegator, await_func), config,
+          std::move(logger)) {}
 
 bool clusterization_algorithm::input_is_valid(
     const edm::silicon_cell_collection::const_view& cells) const {
@@ -75,10 +74,6 @@ void clusterization_algorithm::cluster_maker_kernel(
             disjoint_set, cluster_data);
         TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());  
     });
-}
-
-void clusterization_algorithm::await() const {
-    m_await_function(stream());
 }
 
 }  // namespace traccc::cuda

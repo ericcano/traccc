@@ -100,7 +100,7 @@ class triplet_seeding_algorithm
                 this->copy().get_size(spacepoints, *(this->mr().host));
             // Here we could give control back to the caller, once our code allows
             // for it. (coroutines...)<-WIP
-            await();
+            this->await();
             n_spacepoints = size.get();
         } else {
             n_spacepoints = this->copy().get_size(spacepoints);
@@ -154,7 +154,7 @@ class triplet_seeding_algorithm
                 grid_prefix_sum_buffer, *(this->mr().host));
             // Here we could give control back to the caller, once our code allows
             // for it. (coroutines...)<-WIP
-            await();
+            this->await();
             n_spacepoints = size.get();
         } else {
             n_spacepoints = this->copy().get_size(grid_prefix_sum_buffer);
@@ -192,7 +192,7 @@ class triplet_seeding_algorithm
                 doublet_counter_buffer, *(this->mr().host));
             // Here we could give control back to the caller, once our code allows
             // for it. (coroutines...)<-WIP
-            await();
+            this->await();
             n_doublets = size.get();
         } else {
             n_doublets = this->copy().get_size(doublet_counter_buffer);
@@ -258,7 +258,7 @@ class triplet_seeding_algorithm
                 triplet_counter_midBot_buffer, *(this->mr().host));
             // Here we could give control back to the caller, once our code allows
             // for it. (coroutines...)<-WIP
-            await();
+            this->await();
             n_midBotTriplets = size.get();
         } else {
             n_midBotTriplets =
@@ -549,9 +549,6 @@ class triplet_seeding_algorithm
         const select_seeds_kernel_payload& payload) const = 0;
 
     /// @}
-
-    /// Possibly suspend execution until all asynchronous operations are done
-    virtual void await() const = 0;
 
     private:
     /// Pointer to internal data

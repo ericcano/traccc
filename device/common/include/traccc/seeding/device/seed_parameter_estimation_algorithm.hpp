@@ -87,7 +87,7 @@ struct seed_parameter_estimation_algorithm
                 this->copy().get_size(seeds, *(this->mr().host));
             // Here we could give control back to the caller, once our code allows
             // for it. (coroutines...)<-WIP
-            await();
+            this->await();
             n_seeds = size.get();
         } else {
             n_seeds = this->copy().get_size(seeds);
@@ -142,9 +142,6 @@ struct seed_parameter_estimation_algorithm
         const struct estimate_seed_params_kernel_payload& payload) const = 0;
 
     /// @}
-
-    /// Possibly suspend execution until all asynchronous operations are done
-    virtual void await() const = 0;
 
     private:
     /// Internal configuration data

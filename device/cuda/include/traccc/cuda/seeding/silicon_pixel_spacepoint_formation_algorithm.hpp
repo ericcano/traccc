@@ -54,11 +54,6 @@ class silicon_pixel_spacepoint_formation_algorithm
 
     /// @}
 
-    void await() const override;
-
-    private:
-    await_function_t m_await_function;
-
 };  // class silicon_pixel_spacepoint_formation_algorithm
 
 }  // namespace traccc::cuda
