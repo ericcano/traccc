@@ -62,11 +62,13 @@
 
 // System include(s).
 #include <atomic>
+#include <chrono>
 #include <cstdlib>
 #include <ctime>
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <thread>
 #include <limits>
 #include <memory>
 #include <vector>
@@ -252,6 +254,16 @@ int throughput_mt(std::string_view description, int argc, char* argv[]) {
     tbb::task_arena arena{static_cast<int>(threading_opts.threads), 0};
     tbb::task_group group;
 #endif
+
+    // Launch a watchdog thread that calls exit() after the requested timeout.
+    if (throughput_opts.timeout_seconds > 0u) {
+        std::thread([timeout = throughput_opts.timeout_seconds]() {
+            std::this_thread::sleep_for(std::chrono::seconds(timeout));
+            std::cerr << "[timeout] " << timeout
+                      << "s elapsed, calling exit(1)\n";
+            std::exit(1);
+        }).detach();
+    }
 
     // Seed the random number generator.
     if (throughput_opts.random_seed == 0u) {

@@ -19,6 +19,8 @@
 #include "traccc/utils/messaging.hpp"
 
 // System include(s).
+#include <atomic>
+#include <iostream>
 #include <type_traits>
 
 namespace traccc::device {
@@ -65,6 +67,10 @@ class silicon_pixel_spacepoint_formation_algorithm
         const edm::measurement_collection<default_algebra>::const_view&
             measurements) const override {
 
+        static std::atomic<int> s_call_id{0};
+        const int call_id = s_call_id.fetch_add(1);
+        std::cout << "[silicon_pixel_spacepoint_formation_algorithm #" << call_id << "] operator() start" << std::endl;
+
         // Get the number of measurements. In an asynchronous way if possible.
         edm::measurement_collection<default_algebra>::const_view::size_type
             n_measurements = 0u;
@@ -73,14 +79,18 @@ class silicon_pixel_spacepoint_formation_algorithm
                 this->copy().get_size(measurements, *(this->mr().host));
             // Here we could give control back to the caller, once our code allows
             // for it. (coroutines...)<-WIP
+            std::cout << "[silicon_pixel_spacepoint_formation_algorithm #" << call_id << "] before await (count measurements)" << std::endl;
             this->await();
             n_measurements = size.get();
+            std::cout << "[silicon_pixel_spacepoint_formation_algorithm #" << call_id << "] after await (count measurements), n_measurements=" << n_measurements << std::endl;
         } else {
             n_measurements = this->copy().get_size(measurements);
+            std::cout << "[silicon_pixel_spacepoint_formation_algorithm #" << call_id << "] n_measurements=" << n_measurements << " (sync)" << std::endl;
         }
 
         // If there are no measurements, return right away.
         if (n_measurements == 0) {
+            std::cout << "[silicon_pixel_spacepoint_formation_algorithm #" << call_id << "] no measurements, returning early" << std::endl;
             return {};
         }
 
@@ -91,8 +101,10 @@ class silicon_pixel_spacepoint_formation_algorithm
         this->copy().setup(spacepoints)->ignore();
 
         // Launch the spacepoint formation kernel.
+        std::cout << "[silicon_pixel_spacepoint_formation_algorithm #" << call_id << "] launching form_spacepoints_kernel" << std::endl;
         form_spacepoints_kernel(
             {n_measurements, det, measurements, spacepoints});
+        std::cout << "[silicon_pixel_spacepoint_formation_algorithm #" << call_id << "] form_spacepoints_kernel launched, done" << std::endl;
 
         // Return the reconstructed spacepoints.
         return spacepoints;

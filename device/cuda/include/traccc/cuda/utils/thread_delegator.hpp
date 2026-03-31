@@ -138,7 +138,7 @@ namespace traccc::cuda {
   ///
   /// Define THREAD_DELEGATOR_VERBOSE before including this header to enable
   /// per-call diagnostic printouts.
-// #define THREAD_DELEGATOR_VERBOSE
+#define THREAD_DELEGATOR_VERBOSE
   class single_threaded_delegator_suspend : public thread_delegator {
     public:
     void delegate(std::function<void()> func) override {

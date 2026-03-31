@@ -46,6 +46,10 @@ throughput::throughput() : interface("Throughput Measurement Options") {
     m_desc.add_options()(
         "log-file", po::value(&log_file),
         "File where result logs will be printed (in append mode).");
+    m_desc.add_options()(
+        "timeout",
+        po::value(&timeout_seconds)->default_value(timeout_seconds),
+        "Exit after N seconds (0 = disabled)");
 }
 
 void throughput::read(const po::variables_map& vm) {
@@ -92,6 +96,9 @@ std::unique_ptr<configuration_printable> throughput::as_printable() const {
     cat->add_child(std::make_unique<configuration_kv_pair>(
         "Random seed",
         random_seed == 0 ? "time-based" : std::to_string(random_seed)));
+    cat->add_child(std::make_unique<configuration_kv_pair>(
+        "Timeout",
+        timeout_seconds == 0 ? "disabled" : std::to_string(timeout_seconds) + "s"));
 
     return cat;
 }

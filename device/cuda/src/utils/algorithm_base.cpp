@@ -89,6 +89,8 @@ void algorithm_base::await() const {
                 delegator().delegateAsync([s, &suspend_point]() {
                     CUDA_ERROR_CHECK(
                         cudaLaunchHostFunc(s, tbb_await_callback, &suspend_point));
+                    std::cout << "[tbb_await_callback] CUDA callback launched from thread "
+                              << std::this_thread::get_id() << std::endl;
                 });
             });
             CUDA_ERROR_CHECK(cudaGetLastError());

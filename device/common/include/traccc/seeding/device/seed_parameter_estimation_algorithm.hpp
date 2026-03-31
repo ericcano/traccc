@@ -22,6 +22,8 @@
 #include "traccc/utils/messaging.hpp"
 
 // System include(s).
+#include <atomic>
+#include <iostream>
 #include <memory>
 #include <type_traits>
 
@@ -80,6 +82,10 @@ struct seed_parameter_estimation_algorithm
         const edm::spacepoint_collection::const_view& spacepoints,
         const edm::seed_collection::const_view& seeds) const override {
 
+        static std::atomic<int> s_call_id{0};
+        const int call_id = s_call_id.fetch_add(1);
+        std::cout << "[seed_parameter_estimation_algorithm #" << call_id << "] operator() start" << std::endl;
+
         // Get the number of seeds. In an asynchronous way if possible.
         edm::seed_collection::const_view::size_type n_seeds = 0u;
         if (this->mr().host) {
@@ -87,14 +93,18 @@ struct seed_parameter_estimation_algorithm
                 this->copy().get_size(seeds, *(this->mr().host));
             // Here we could give control back to the caller, once our code allows
             // for it. (coroutines...)<-WIP
+            std::cout << "[seed_parameter_estimation_algorithm #" << call_id << "] before await (count seeds)" << std::endl;
             this->await();
             n_seeds = size.get();
+            std::cout << "[seed_parameter_estimation_algorithm #" << call_id << "] after await (count seeds), n_seeds=" << n_seeds << std::endl;
         } else {
             n_seeds = this->copy().get_size(seeds);
+            std::cout << "[seed_parameter_estimation_algorithm #" << call_id << "] n_seeds=" << n_seeds << " (sync)" << std::endl;
         }
 
         // If there are no seeds, return right away.
         if (n_seeds == 0) {
+            std::cout << "[seed_parameter_estimation_algorithm #" << call_id << "] no seeds, returning early" << std::endl;
             return {};
         }
 
@@ -104,8 +114,10 @@ struct seed_parameter_estimation_algorithm
         this->copy().setup(result)->ignore();
 
         // Launch the seed parameter estimation kernel.
+        std::cout << "[seed_parameter_estimation_algorithm #" << call_id << "] launching estimate_seed_params_kernel" << std::endl;
         estimate_seed_params_kernel({n_seeds, m_data->m_config, bfield,
                                      measurements, spacepoints, seeds, result});
+        std::cout << "[seed_parameter_estimation_algorithm #" << call_id << "] estimate_seed_params_kernel launched, done" << std::endl;
 
         // Return the result.
         return result;

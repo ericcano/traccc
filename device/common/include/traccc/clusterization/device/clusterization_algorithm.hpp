@@ -27,7 +27,9 @@
 #include <vecmem/utils/copy.hpp>
 
 // System include(s).
+#include <atomic>
 #include <functional>
+#include <iostream>
 #include <optional>
 #include <type_traits>
 
@@ -200,6 +202,10 @@ class clusterization_algorithm
     execute_impl(const edm::silicon_cell_collection::const_view& cells,
                  const silicon_detector_description::const_view& det_descr,
                  bool keep_disjoint_set) const {
+        static std::atomic<int> s_call_id{0};
+        const int call_id = s_call_id.fetch_add(1);
+        std::cout << "[clusterization_algorithm #" << call_id << "] execute_impl start" << std::endl;
+
         // Check the input data in debug mode.
         assert(input_is_valid(cells));
 
@@ -219,10 +225,13 @@ class clusterization_algorithm
             
             // Here we could give control back to the caller, once our code allows
             // for it. (coroutines...)<-WIP
+            std::cout << "[clusterization_algorithm #" << call_id << "] before await (count cells)" << std::endl;
             this->await();
             num_cells = size.get();
+            std::cout << "[clusterization_algorithm #" << call_id << "] after await (count cells), n_cells=" << num_cells << std::endl;
         } else {
             num_cells = this->copy().get_size(cells);
+            std::cout << "[clusterization_algorithm #" << call_id << "] n_cells=" << num_cells << " (sync)" << std::endl;
         }
 
         // If there are no cells, return right away.
@@ -258,9 +267,11 @@ class clusterization_algorithm
         }
 
         // Launch the CCL kernel.
+        std::cout << "[clusterization_algorithm #" << call_id << "] launching ccl_kernel" << std::endl;
         ccl_kernel({num_cells, m_config, cells, det_descr, measurements, cell_links,
                     m_f_backup, m_gf_backup, m_adjc_backup, m_adjv_backup,
                     m_backup_mutex.get(), disjoint_set, cluster_sizes});
+        std::cout << "[clusterization_algorithm #" << call_id << "] ccl_kernel launched" << std::endl;
 
         std::optional<traccc::edm::silicon_cluster_collection::buffer>
             cluster_data = std::nullopt;
@@ -277,8 +288,10 @@ class clusterization_algorithm
                     this->copy().get_size(measurements, *(this->mr().host));
                 // Here we could give control back to the caller, once our code
                 // allows for it. (coroutines...)<-WIP
+                std::cout << "[clusterization_algorithm #" << call_id << "] before await (count measurements)" << std::endl;
                 this->await();
                 num_measurements = size.get();
+                std::cout << "[clusterization_algorithm #" << call_id << "] after await (count measurements), n_measurements=" << num_measurements << std::endl;
             } else {
                 num_measurements = this->copy().get_size(measurements);
             }
@@ -298,10 +311,13 @@ class clusterization_algorithm
             this->copy().setup(*cluster_data)->ignore();
 
             // Run the cluster data reification kernel.
+            std::cout << "[clusterization_algorithm #" << call_id << "] launching cluster_maker_kernel" << std::endl;
             cluster_maker_kernel(num_cells, disjoint_set, *cluster_data);
+            std::cout << "[clusterization_algorithm #" << call_id << "] cluster_maker_kernel launched" << std::endl;
         }
 
         // Return the reconstructed measurements.
+        std::cout << "[clusterization_algorithm #" << call_id << "] execute_impl done" << std::endl;
         return {std::move(measurements), std::move(cluster_data)};
     }
 

@@ -73,7 +73,7 @@ done
 
 
 # Translate to traccc_throughput_mt_cuda arguments
-cmd=("/usr/bin/timeout" "60" "$builddir/bin/traccc_throughput_mt_cuda")
+cmd=("/usr/bin/timeout" "--preserve-status" "10" "$builddir/bin/traccc_throughput_mt_cuda")
 
 cmd+=("--cpu-threads" "$threads")
 cmd+=("--cold-run-events" "$warmupEvents")

@@ -57,6 +57,9 @@ void clusterization_algorithm::ccl_kernel(
             payload.adjc_backup, payload.adjv_backup, payload.backup_mutex,
             payload.disjoint_set, payload.cluster_sizes);
         TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
+        std::cout << "><><><><>< CCL kernel launched with " << num_blocks << " blocks and "
+                  << payload.config.threads_per_partition << " threads per block."
+                  << " in thread " << std::this_thread::get_id() << std::endl;
     });
 }
 

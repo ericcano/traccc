@@ -27,7 +27,9 @@
 #include "traccc/utils/messaging.hpp"
 
 // System include(s).
+#include <atomic>
 #include <cassert>
+#include <iostream>
 #include <memory>
 
 namespace traccc::device {
@@ -93,6 +95,10 @@ class triplet_seeding_algorithm
         // A small sanity check.
         assert(m_data);
 
+        static std::atomic<int> s_call_id{0};
+        const int call_id = s_call_id.fetch_add(1);
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] operator() start" << std::endl;
+
         // Get the number of spacepoints. In an asynchronous way if possible.
         edm::spacepoint_collection::const_view::size_type n_spacepoints = 0u;
         if (this->mr().host) {
@@ -100,13 +106,17 @@ class triplet_seeding_algorithm
                 this->copy().get_size(spacepoints, *(this->mr().host));
             // Here we could give control back to the caller, once our code allows
             // for it. (coroutines...)<-WIP
+            std::cout << "[triplet_seeding_algorithm #" << call_id << "] before await (count spacepoints)" << std::endl;
             this->await();
             n_spacepoints = size.get();
+            std::cout << "[triplet_seeding_algorithm #" << call_id << "] after await (count spacepoints), n_spacepoints=" << n_spacepoints << std::endl;
         } else {
             n_spacepoints = this->copy().get_size(spacepoints);
+            std::cout << "[triplet_seeding_algorithm #" << call_id << "] n_spacepoints=" << n_spacepoints << " (sync)" << std::endl;
         }
 
         if (n_spacepoints == 0) {
+            std::cout << "[triplet_seeding_algorithm #" << call_id << "] no spacepoints, returning early" << std::endl;
             return {};
         }
 
@@ -120,9 +130,11 @@ class triplet_seeding_algorithm
         this->copy().memset(grid_capacities_buffer, 0)->ignore();
 
         // Launch the grid capacity counting kernel.
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] launching count_grid_capacities_kernel" << std::endl;
         count_grid_capacities_kernel(
             {n_spacepoints, m_data->m_finder_config, m_data->m_axes.first,
              m_data->m_axes.second, spacepoints, grid_capacities_buffer});
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] count_grid_capacities_kernel launched" << std::endl;
 
         // Copy grid capacities back to the host.
         vecmem::vector<unsigned int> grid_capacities_host(
@@ -144,9 +156,11 @@ class triplet_seeding_algorithm
         this->copy().setup(grid_prefix_sum_buffer)->ignore();
 
         // Launch the grid population kernel.
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] launching populate_grid_kernel" << std::endl;
         populate_grid_kernel({n_spacepoints, m_data->m_finder_config,
                               spacepoints, grid_buffer,
                               grid_prefix_sum_buffer});
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] populate_grid_kernel launched" << std::endl;
 
         // Update the spacepoint counter.
         if (this->mr().host) {
@@ -154,8 +168,10 @@ class triplet_seeding_algorithm
                 grid_prefix_sum_buffer, *(this->mr().host));
             // Here we could give control back to the caller, once our code allows
             // for it. (coroutines...)<-WIP
+            std::cout << "[triplet_seeding_algorithm #" << call_id << "] before await (recount spacepoints after grid)" << std::endl;
             this->await();
             n_spacepoints = size.get();
+            std::cout << "[triplet_seeding_algorithm #" << call_id << "] after await (recount spacepoints), n_spacepoints=" << n_spacepoints << std::endl;
         } else {
             n_spacepoints = this->copy().get_size(grid_prefix_sum_buffer);
         }
@@ -178,11 +194,13 @@ class triplet_seeding_algorithm
             ->ignore();
 
         // Launch the doublet counting kernel.
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] launching count_doublets_kernel" << std::endl;
         count_doublets_kernel(
             {n_spacepoints, m_data->m_finder_config, spacepoints, grid_buffer,
              grid_prefix_sum_buffer, doublet_counter_buffer,
              globalCounter_device->m_nMidBot,
              globalCounter_device->m_nMidTop});
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] count_doublets_kernel launched" << std::endl;
 
         // Get the number of doublets found.
         device::doublet_counter_collection_types::buffer::size_type
@@ -192,8 +210,10 @@ class triplet_seeding_algorithm
                 doublet_counter_buffer, *(this->mr().host));
             // Here we could give control back to the caller, once our code allows
             // for it. (coroutines...)<-WIP
+            std::cout << "[triplet_seeding_algorithm #" << call_id << "] before await (count doublets)" << std::endl;
             this->await();
             n_doublets = size.get();
+            std::cout << "[triplet_seeding_algorithm #" << call_id << "] after await (count doublets), n_doublets=" << n_doublets << std::endl;
         } else {
             n_doublets = this->copy().get_size(doublet_counter_buffer);
         }
@@ -211,6 +231,7 @@ class triplet_seeding_algorithm
         // Exit already here if we won't find any triplets anyway.
         if ((globalCounter_host->m_nMidBot == 0) ||
             (globalCounter_host->m_nMidTop == 0)) {
+            std::cout << "[triplet_seeding_algorithm #" << call_id << "] no doublets (nMidBot=" << globalCounter_host->m_nMidBot << ", nMidTop=" << globalCounter_host->m_nMidTop << "), returning early" << std::endl;
             return {};
         }
 
@@ -223,9 +244,11 @@ class triplet_seeding_algorithm
         this->copy().setup(doublet_buffer_mt)->ignore();
 
         // Launch the doublet finding kernel.
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] launching find_doublets_kernel" << std::endl;
         find_doublets_kernel({n_doublets, m_data->m_finder_config, spacepoints,
                               grid_buffer, doublet_counter_buffer,
                               doublet_buffer_mb, doublet_buffer_mt});
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] find_doublets_kernel launched" << std::endl;
 
         // Set up the triplet counter buffers.
         triplet_counter_spM_collection_types::buffer
@@ -239,16 +262,20 @@ class triplet_seeding_algorithm
         this->copy().setup(triplet_counter_midBot_buffer)->ignore();
 
         // Launch the triplet counting kernel.
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] launching count_triplets_kernel" << std::endl;
         count_triplets_kernel(
             {globalCounter_host->m_nMidBot, m_data->m_finder_config,
              spacepoints, grid_buffer, doublet_counter_buffer,
              doublet_buffer_mb, doublet_buffer_mt, triplet_counter_spM_buffer,
              triplet_counter_midBot_buffer});
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] count_triplets_kernel launched" << std::endl;
 
         // Launch the triplet count reduction kernel.
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] launching triplet_counts_reduction_kernel" << std::endl;
         triplet_counts_reduction_kernel(
             {n_doublets, doublet_counter_buffer, triplet_counter_spM_buffer,
              globalCounter_device->m_nTriplets});
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] triplet_counts_reduction_kernel launched" << std::endl;
 
         // Get the number of triplets found.
         triplet_counter_collection_types::buffer::size_type n_midBotTriplets =
@@ -258,8 +285,10 @@ class triplet_seeding_algorithm
                 triplet_counter_midBot_buffer, *(this->mr().host));
             // Here we could give control back to the caller, once our code allows
             // for it. (coroutines...)<-WIP
+            std::cout << "[triplet_seeding_algorithm #" << call_id << "] before await (count midBot triplets)" << std::endl;
             this->await();
             n_midBotTriplets = size.get();
+            std::cout << "[triplet_seeding_algorithm #" << call_id << "] after await (count midBot triplets), n_midBotTriplets=" << n_midBotTriplets << std::endl;
         } else {
             n_midBotTriplets =
                 this->copy().get_size(triplet_counter_midBot_buffer);
@@ -273,6 +302,7 @@ class triplet_seeding_algorithm
 
         // If no triplets could be found, exit already here.
         if (globalCounter_host->m_nTriplets == 0) {
+            std::cout << "[triplet_seeding_algorithm #" << call_id << "] no triplets found, returning early" << std::endl;
             return {};
         }
 
@@ -282,17 +312,21 @@ class triplet_seeding_algorithm
         this->copy().setup(triplet_buffer)->ignore();
 
         // Launch the triplet finding kernel.
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] launching find_triplets_kernel" << std::endl;
         find_triplets_kernel(
             {n_midBotTriplets, m_data->m_finder_config, m_data->m_filter_config,
              spacepoints, grid_buffer, doublet_counter_buffer, doublet_buffer_mt,
              triplet_counter_spM_buffer, triplet_counter_midBot_buffer,
              triplet_buffer});
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] find_triplets_kernel launched" << std::endl;
 
         // Launch the triplet weight updating/filling kernel.
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] launching update_triplet_weights_kernel" << std::endl;
         update_triplet_weights_kernel(
             {globalCounter_host->m_nTriplets, m_data->m_filter_config,
              spacepoints, triplet_counter_spM_buffer,
              triplet_counter_midBot_buffer, triplet_buffer});
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] update_triplet_weights_kernel launched" << std::endl;
 
         // Create the result object.
         edm::seed_collection::buffer seed_buffer(
@@ -301,10 +335,12 @@ class triplet_seeding_algorithm
         this->copy().setup(seed_buffer)->ignore();
 
         // Launch the seed selecting/filling kernel.
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] launching select_seeds_kernel" << std::endl;
         select_seeds_kernel(
             {n_doublets, m_data->m_finder_config, m_data->m_filter_config,
              spacepoints, grid_buffer, triplet_counter_spM_buffer,
              triplet_counter_midBot_buffer, triplet_buffer, seed_buffer});
+        std::cout << "[triplet_seeding_algorithm #" << call_id << "] select_seeds_kernel launched, done" << std::endl;
 
         // Return the seed buffer.
         return seed_buffer;

@@ -45,6 +45,9 @@ class throughput : public interface {
     /// Output log file
     std::string log_file;
 
+    /// Exit after this many seconds (0 = disabled)
+    std::size_t timeout_seconds = 0;
+
     /// @}
 
     /// Constructor
