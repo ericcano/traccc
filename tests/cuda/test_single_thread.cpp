@@ -26,7 +26,7 @@
 #endif
 
 TEST(CUDASingleThreadedDelegator, ExceptionPropagation) {
-    auto &delegator = traccc::cuda::single_threaded_delegator_sync::get();
+    auto &delegator = traccc::cuda::tbb_arena_delegator_sync::get();
 
     for (int i = 0; i < 500; ++i) {
         EXPECT_THROW(delegator.delegate([]() {
@@ -44,14 +44,14 @@ TEST(CUDASingleThreadedDelegator, ExceptionPropagation) {
     // Test the fire and forget delegator does not propagate exceptions
     // (actually something somewhere in TBB should catch and log the exception,
     // but we can't test that here)
-    auto& delegator_ff = traccc::cuda::single_threaded_delegator_fire_and_forget::get();
+    auto& delegator_ff = traccc::cuda::tbb_arena_delegator_fire_and_forget::get();
     for (int i = 0; i < 500; ++i) {
          EXPECT_NO_THROW(delegator_ff.delegate([]() {
             throw std::runtime_error("Test exception");
         }));
     }
 
-    traccc::cuda::single_threaded_delegator_suspend delegator_suspend;
+    traccc::cuda::tbb_arena_delegator_suspend delegator_suspend;
     for (int i = 0; i < 500; ++i) {
         EXPECT_THROW(delegator_suspend.delegate([]() {
             throw std::runtime_error("Test exception");
@@ -60,7 +60,7 @@ TEST(CUDASingleThreadedDelegator, ExceptionPropagation) {
 }
 
 TEST(CUDASingleThreadedDelegator, MultipleDelegations) {
-    auto& delegator = traccc::cuda::single_threaded_delegator_sync::get();
+    auto& delegator = traccc::cuda::tbb_arena_delegator_sync::get();
 
     // Delegate multiple tasks and ensure they all execute correctly
     for (int i = 0; i < 500; ++i) {
@@ -73,7 +73,7 @@ TEST(CUDASingleThreadedDelegator, MultipleDelegations) {
     }
 
     // Delegating multiple tasks to the fire and forget delegator
-    auto& delegator_ff = traccc::cuda::single_threaded_delegator_fire_and_forget::get();
+    auto& delegator_ff = traccc::cuda::tbb_arena_delegator_fire_and_forget::get();
     for (int i = 0; i < 500; ++i) {
         TEST_LOG("Delegating task " << i << " to fire and forget delegator in thread " << std::this_thread::get_id());
         EXPECT_NO_THROW(delegator_ff.delegate([i]() {
@@ -83,7 +83,7 @@ TEST(CUDASingleThreadedDelegator, MultipleDelegations) {
     }
 
     // Delegating multiple tasks to the suspend delegator
-    auto&  delegator_suspend = traccc::cuda::single_threaded_delegator_suspend::get();
+    auto&  delegator_suspend = traccc::cuda::tbb_arena_delegator_suspend::get();
     for (int i = 0; i < 500; ++i) {
         TEST_LOG("Delegating task " << i << " to suspend delegator in thread " << std::this_thread::get_id());
         EXPECT_NO_THROW(delegator_suspend.delegate([i]() {
@@ -98,7 +98,7 @@ TEST(CUDASingleThreadedDelegator, MultipleDelegationsInTasksSync) {
 
     // Outer tasks dispatched as TBB tasks in a 10-thread arena.
     // Each outer task calls delegate() which itself enqueues an inner task.
-    auto& delegator = traccc::cuda::single_threaded_delegator_sync::get();
+    auto& delegator = traccc::cuda::tbb_arena_delegator_sync::get();
     tbb::task_group tg;
     outer_arena.execute([&]() {
         for (int i = 0; i < 500; ++i) {
@@ -116,7 +116,7 @@ TEST(CUDASingleThreadedDelegator, MultipleDelegationsInTasksSync) {
 
 TEST(CUDASingleThreadedDelegator, MultipleDelegationsInTasksFireAndForget) {
     tbb::task_arena outer_arena(std::thread::hardware_concurrency()-1);
-    auto& delegator_ff = traccc::cuda::single_threaded_delegator_fire_and_forget::get();
+    auto& delegator_ff = traccc::cuda::tbb_arena_delegator_fire_and_forget::get();
     tbb::task_group tg;
     for (int i = 0; i < 500; ++i) {
         outer_arena.execute([&]() {
@@ -133,7 +133,7 @@ TEST(CUDASingleThreadedDelegator, MultipleDelegationsInTasksFireAndForget) {
 
 TEST(CUDASingleThreadedDelegator, MultipleDelegationsInTasksSuspend) {
     tbb::task_arena outer_arena(std::thread::hardware_concurrency());
-    auto& delegator_suspend = traccc::cuda::single_threaded_delegator_suspend::get();
+    auto& delegator_suspend = traccc::cuda::tbb_arena_delegator_suspend::get();
     tbb::task_group tg;
     for (int i = 0; i < 500; ++i) {
         outer_arena.execute([&]() {

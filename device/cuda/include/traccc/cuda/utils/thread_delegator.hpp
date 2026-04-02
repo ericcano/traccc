@@ -45,7 +45,7 @@ namespace traccc::cuda {
   /// Derived class of single_threaded_delegator that does not propagate exceptions
   /// back to the caller. The caller does not block, and the delegated task is executed asynchronously.
   /// Exceptions are discarded.
-  class single_threaded_delegator_fire_and_forget : public thread_delegator {
+  class tbb_arena_delegator_fire_and_forget : public thread_delegator {
     public:
     void delegate(std::function<void()> func) override {
       m_arena.enqueue([this, func](){
@@ -57,7 +57,7 @@ namespace traccc::cuda {
       delegate(func);
     }
 
-    ~single_threaded_delegator_fire_and_forget() noexcept override {
+    ~tbb_arena_delegator_fire_and_forget() noexcept override {
       try {
         m_group.wait();
       } catch (...) {
@@ -66,9 +66,9 @@ namespace traccc::cuda {
       m_group.wait();
     }
 
-    single_threaded_delegator_fire_and_forget() : m_arena(1, 0, tbb::task_arena::priority::high) {}
-    static single_threaded_delegator_fire_and_forget& get() {
-      static single_threaded_delegator_fire_and_forget instance;
+    tbb_arena_delegator_fire_and_forget() : m_arena(1, 0, tbb::task_arena::priority::high) {}
+    static tbb_arena_delegator_fire_and_forget& get() {
+      static tbb_arena_delegator_fire_and_forget instance;
       return instance;
     }
 
@@ -82,7 +82,7 @@ namespace traccc::cuda {
   ///
   /// The caller blocks on a spinlock until the delegated task completes.
   /// If the lambda threw, the exception is rethrown at the call site.
-  class single_threaded_delegator_sync : public thread_delegator {
+  class tbb_arena_delegator_sync : public thread_delegator {
     public:
     void delegate(std::function<void()> func) {
       std::exception_ptr eptr = nullptr;
@@ -114,15 +114,15 @@ namespace traccc::cuda {
       });
     }
 
-    ~single_threaded_delegator_sync() noexcept override{
+    ~tbb_arena_delegator_sync() noexcept override{
       m_group.wait();
     }
-    static single_threaded_delegator_sync& get() {
-      static single_threaded_delegator_sync instance;
+    static tbb_arena_delegator_sync& get() {
+      static tbb_arena_delegator_sync instance;
       return instance;
     }
 
-    single_threaded_delegator_sync() : m_arena(1, 0, tbb::task_arena::priority::high) {}
+    tbb_arena_delegator_sync() : m_arena(1, 0, tbb::task_arena::priority::high) {}
 
     private:
     tbb::task_arena m_arena;
@@ -139,7 +139,7 @@ namespace traccc::cuda {
   /// Define THREAD_DELEGATOR_VERBOSE before including this header to enable
   /// per-call diagnostic printouts.
 #define THREAD_DELEGATOR_VERBOSE
-  class single_threaded_delegator_suspend : public thread_delegator {
+  class tbb_arena_delegator_suspend : public thread_delegator {
     public:
     void delegate(std::function<void()> func) override {
       std::exception_ptr eptr = nullptr;
@@ -196,12 +196,12 @@ namespace traccc::cuda {
       });
     }
 
-    ~single_threaded_delegator_suspend() noexcept override {
+    ~tbb_arena_delegator_suspend() noexcept override {
       m_group.wait();
     }
 
-    static single_threaded_delegator_suspend& get() {
-      static single_threaded_delegator_suspend instance;
+    static tbb_arena_delegator_suspend& get() {
+      static tbb_arena_delegator_suspend instance;
 #ifdef THREAD_DELEGATOR_VERBOSE
       std::cout << "Getting single_threaded_delegator_suspend instance at address " << &instance << " in thread "
                 << std::this_thread::get_id() << "\n";
@@ -209,7 +209,7 @@ namespace traccc::cuda {
       return instance;
     }
 
-    single_threaded_delegator_suspend() : m_arena(1, 1, tbb::task_arena::priority::high) {}
+    tbb_arena_delegator_suspend() : m_arena(1, 1, tbb::task_arena::priority::high) {}
 
     private:
     tbb::task_arena m_arena;
