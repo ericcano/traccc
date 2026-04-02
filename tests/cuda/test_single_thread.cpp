@@ -26,41 +26,74 @@
 #endif
 
 TEST(CUDASingleThreadedDelegator, ExceptionPropagation) {
-    auto &delegator = traccc::cuda::tbb_arena_delegator_sync::get();
+    // Base delegator should always propagate exceptions thrown by the delegated function.
+    auto &delegator = traccc::cuda::thread_delegator::get();
 
     for (int i = 0; i < 500; ++i) {
         EXPECT_THROW(delegator.delegate([]() {
             throw std::runtime_error("Test exception");
         }), std::runtime_error);
     }
-
     // Also test that normal execution still works
     for (int i = 0; i < 500; ++i) {
         EXPECT_NO_THROW(delegator.delegate([]() {
             // Do nothing
         }));
     }
-
-    // Test the fire and forget delegator does not propagate exceptions
-    // (actually something somewhere in TBB should catch and log the exception,
-    // but we can't test that here)
-    auto& delegator_ff = traccc::cuda::tbb_arena_delegator_fire_and_forget::get();
+    // Test that exceptions thrown in the async variant do propagate to the caller
     for (int i = 0; i < 500; ++i) {
-         EXPECT_NO_THROW(delegator_ff.delegate([]() {
+        EXPECT_THROW(delegator.delegateAsync([]() {
             throw std::runtime_error("Test exception");
+        }), std::runtime_error);
+    }
+
+    // Test TBB delegator
+    auto& delegator_tbb = traccc::cuda::tbb_arena_delegator_suspend::get();
+    // Exceptions thrown in the delegate() call should propagate to the caller
+    for (int i = 0; i < 500; ++i) {
+        EXPECT_THROW(delegator_tbb.delegate([]() {
+            throw std::runtime_error("Test exception");
+        }), std::runtime_error);
+    }
+    // Also test that normal execution still works
+    for (int i = 0; i < 500; ++i) {
+        EXPECT_NO_THROW(delegator_tbb.delegate([]() {
+            // Do nothing
+        }));
+     }
+
+     // Test that exceptions thrown in the async variant do propagate to the caller
+     for (int i = 0; i < 500; ++i) {
+         EXPECT_THROW(delegator_tbb.delegateAsync([]() {
+             throw std::runtime_error("Test exception");
+         }), std::runtime_error);
+     }
+
+     // Test thread delegator
+     auto& delegator_thread = traccc::cuda::thread_delegator_suspend::get();
+     // Exceptions thrown in the delegate() call should propagate to the caller
+     for (int i = 0; i < 500; ++i) {
+         EXPECT_THROW(delegator_thread.delegate([]() {
+             throw std::runtime_error("Test exception");
+         }), std::runtime_error);
+    }
+    // Also test that normal execution still works
+    for (int i = 0; i < 500; ++i) {
+        EXPECT_NO_THROW(delegator_thread.delegate([]() {
+            // Do nothing
         }));
     }
 
-    traccc::cuda::tbb_arena_delegator_suspend delegator_suspend;
+    // Test that exceptions thrown in the async variant do propagate to the caller
     for (int i = 0; i < 500; ++i) {
-        EXPECT_THROW(delegator_suspend.delegate([]() {
+        EXPECT_THROW(delegator_thread.delegateAsync([]() {
             throw std::runtime_error("Test exception");
         }), std::runtime_error);
     }
 }
 
 TEST(CUDASingleThreadedDelegator, MultipleDelegations) {
-    auto& delegator = traccc::cuda::tbb_arena_delegator_sync::get();
+    auto& delegator = traccc::cuda::thread_delegator::get();
 
     // Delegate multiple tasks and ensure they all execute correctly
     for (int i = 0; i < 500; ++i) {
@@ -73,17 +106,16 @@ TEST(CUDASingleThreadedDelegator, MultipleDelegations) {
     }
 
     // Delegating multiple tasks to the fire and forget delegator
-    auto& delegator_ff = traccc::cuda::tbb_arena_delegator_fire_and_forget::get();
+    auto&  delegator_suspend = traccc::cuda::tbb_arena_delegator_suspend::get();
     for (int i = 0; i < 500; ++i) {
         TEST_LOG("Delegating task " << i << " to fire and forget delegator in thread " << std::this_thread::get_id());
-        EXPECT_NO_THROW(delegator_ff.delegate([i]() {
+        EXPECT_NO_THROW(delegator_suspend.delegateAsync([i]() {
             TEST_LOG("Running fire and forget task " << i << " in thread " << std::this_thread::get_id());
         }));
         TEST_LOG("Finished delegating task " << i << " to fire and forget delegator in thread " << std::this_thread::get_id());
     }
 
     // Delegating multiple tasks to the suspend delegator
-    auto&  delegator_suspend = traccc::cuda::tbb_arena_delegator_suspend::get();
     for (int i = 0; i < 500; ++i) {
         TEST_LOG("Delegating task " << i << " to suspend delegator in thread " << std::this_thread::get_id());
         EXPECT_NO_THROW(delegator_suspend.delegate([i]() {
@@ -93,60 +125,36 @@ TEST(CUDASingleThreadedDelegator, MultipleDelegations) {
     }
 }
 
-TEST(CUDASingleThreadedDelegator, MultipleDelegationsInTasksSync) {
+TEST(CUDASingleThreadedDelegator, MultipleDelegationsInTasks) {
     tbb::task_arena outer_arena(std::thread::hardware_concurrency()-1);
 
-    // Outer tasks dispatched as TBB tasks in a 10-thread arena.
+    // Outer tasks dispatched as TBB tasks in a bit arena.
     // Each outer task calls delegate() which itself enqueues an inner task.
-    auto& delegator = traccc::cuda::tbb_arena_delegator_sync::get();
+    auto& delegator = traccc::cuda::tbb_arena_delegator_suspend::get();
     tbb::task_group tg;
-    outer_arena.execute([&]() {
-        for (int i = 0; i < 500; ++i) {
+    for (int i = 0; i < 500; ++i) {
+        outer_arena.execute([&]() {
             tg.run([i, &delegator]() {
                 TEST_LOG("Outer sync task " << i << " in thread " << std::this_thread::get_id());
                 EXPECT_NO_THROW(delegator.delegate([i]() {
                     TEST_LOG("Inner sync task " << i << " in thread " << std::this_thread::get_id());
                 }));
             });
-        }
-    });
+        });
+    }
     tg.wait();
-}
 
-
-TEST(CUDASingleThreadedDelegator, MultipleDelegationsInTasksFireAndForget) {
-    tbb::task_arena outer_arena(std::thread::hardware_concurrency()-1);
-    auto& delegator_ff = traccc::cuda::tbb_arena_delegator_fire_and_forget::get();
-    tbb::task_group tg;
+    // Same with thread delegator
+    auto& delegator_thread = traccc::cuda::thread_delegator_suspend::get();
     for (int i = 0; i < 500; ++i) {
         outer_arena.execute([&]() {
-            tg.run([i, &delegator_ff]() {
-                TEST_LOG("Outer fire-and-forget task " << i << " in thread " << std::this_thread::get_id());
-                EXPECT_NO_THROW(delegator_ff.delegate([i]() {
-                    TEST_LOG("Inner fire-and-forget task " << i << " in thread " << std::this_thread::get_id());
+            tg.run([i, &delegator_thread]() {
+                TEST_LOG("Outer sync task " << i << " in thread " << std::this_thread::get_id());
+                EXPECT_NO_THROW(delegator_thread.delegate([i]() {
+                    TEST_LOG("Inner sync task " << i << " in thread " << std::this_thread::get_id());
                 }));
             });
         });
     }
-    tg.wait();
 }
 
-TEST(CUDASingleThreadedDelegator, MultipleDelegationsInTasksSuspend) {
-    tbb::task_arena outer_arena(std::thread::hardware_concurrency());
-    auto& delegator_suspend = traccc::cuda::tbb_arena_delegator_suspend::get();
-    tbb::task_group tg;
-    for (int i = 0; i < 500; ++i) {
-        outer_arena.execute([&]() {
-            tg.run([i, &delegator_suspend]() {
-                TEST_LOG("Outer suspend task " << i << " begin in thread " << std::this_thread::get_id());
-                EXPECT_NO_THROW(delegator_suspend.delegate([i]() {
-                    // nano sleep to increase the chance of interleaving between tasks and make the test more robust
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                    TEST_LOG("Inner suspend task " << i << " in thread " << std::this_thread::get_id());
-                }));
-                TEST_LOG("Outer suspend task " << i << " end in thread " << std::this_thread::get_id());
-            });
-        });
-    }
-    tg.wait();
-}   

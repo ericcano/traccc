@@ -36,12 +36,10 @@ thread_delegator& thread_delegation_strategy_helper::get_delegator() const {
     switch (m_delegation_mode) {
         case thread_delegation_strategy::immediate:
             return thread_delegator::get();
-        case thread_delegation_strategy::fire_and_forget:
-            return tbb_arena_delegator_fire_and_forget::get();
-        case thread_delegation_strategy::sync_delegation:
-            return tbb_arena_delegator_sync::get();
-        case thread_delegation_strategy::suspend:
+        case thread_delegation_strategy::tbb_delegation:
             return tbb_arena_delegator_suspend::get();
+        case thread_delegation_strategy::thread_delegation:
+            return thread_delegator_suspend::get();
         default:
             throw std::invalid_argument("Unknown thread delegation strategy");
     }

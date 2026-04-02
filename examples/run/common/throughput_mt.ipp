@@ -196,17 +196,14 @@ int throughput_mt(std::string_view description, int argc, char* argv[]) {
     thread_delegation_strategy thread_delegation_mode =
         thread_delegation_strategy::immediate;
     if (threading_opts.delegation_strategy ==
-        opts::threading::thread_delegation_strategy::fire_and_forget) {
-        thread_delegation_mode = thread_delegation_strategy::fire_and_forget;
+        opts::threading::thread_delegation_strategy::tbb_delegation) {
+        thread_delegation_mode = thread_delegation_strategy::tbb_delegation;
     } else if (threading_opts.delegation_strategy ==
-               opts::threading::thread_delegation_strategy::sync_delegation) {
-        thread_delegation_mode = thread_delegation_strategy::sync_delegation;
+               opts::threading::thread_delegation_strategy::thread_delegation) {
+        thread_delegation_mode = thread_delegation_strategy::thread_delegation;
     } else if (threading_opts.delegation_strategy ==
                opts::threading::thread_delegation_strategy::immediate) {
         thread_delegation_mode = thread_delegation_strategy::immediate;
-    } else if (threading_opts.delegation_strategy ==
-               opts::threading::thread_delegation_strategy::suspend) {
-        thread_delegation_mode = thread_delegation_strategy::suspend;
     } else {
         throw std::invalid_argument("Unknown CUDA delegation strategy");
     }

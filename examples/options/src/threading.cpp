@@ -46,7 +46,7 @@ threading::threading() : interface("Multi-Threading Options") {
         delegation_strategy_option,
         boost::program_options::value<std::string>()->default_value("immediate"),
         "The strategy to use for delegating CUDA runtime calls to a single thread (\"immediate\","
-        "\"fire_and_forget\", \"sync_delegation\" or \"suspend\")");
+        "\"tbb_delegation\" or \"thread_delegation\")");
 }
 
 void threading::read(const boost::program_options::variables_map& vm) {
@@ -80,12 +80,10 @@ void threading::read(const boost::program_options::variables_map& vm) {
             vm[delegation_strategy_option].as<delegation_strategy_type>();
         if (delegation_string == "immediate") {
             delegation_strategy = thread_delegation_strategy::immediate;
-        } else if (delegation_string == "fire_and_forget") {
-            delegation_strategy = thread_delegation_strategy::fire_and_forget;
-        } else if (delegation_string == "sync_delegation") {
-            delegation_strategy = thread_delegation_strategy::sync_delegation;
-        } else if (delegation_string == "suspend") {
-            delegation_strategy = thread_delegation_strategy::suspend;
+        } else if (delegation_string == "tbb_delegation") {
+            delegation_strategy = thread_delegation_strategy::tbb_delegation;
+        } else if (delegation_string == "thread_delegation") {
+            delegation_strategy = thread_delegation_strategy::thread_delegation;
         } else {
             throw std::invalid_argument{"Unknown delegation strategy: " +
                                         delegation_string};
@@ -119,15 +117,12 @@ std::unique_ptr<configuration_printable> threading::as_printable() const {
         "CUDA delegation strategy",
         delegation_strategy == thread_delegation_strategy::immediate
             ? "immediate"
-            : (delegation_strategy == thread_delegation_strategy::fire_and_forget
-                   ? "fire_and_forget"
+            : (delegation_strategy == thread_delegation_strategy::tbb_delegation
+                   ? "tbb_delegation"
                    : (delegation_strategy ==
-                              thread_delegation_strategy::sync_delegation
-                         ? "sync_delegation"
-                          : (delegation_strategy ==
-                                     thread_delegation_strategy::suspend
-                                ? "suspend"
-                                : "unknown")))));
+                              thread_delegation_strategy::thread_delegation
+                         ? "thread_delegation"
+                          : "unknown"))));
     return cat;
 }
 
