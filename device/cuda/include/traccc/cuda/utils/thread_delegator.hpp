@@ -11,6 +11,7 @@
 #include <exception>
 #include <functional>
 #include <iostream>
+#include <syncstream>
 #include <optional>
 #include <thread>
 #include <tbb/concurrent_queue.h>
@@ -18,7 +19,18 @@
 #include <tbb/task_arena.h>
 #include <tbb/task_group.h>
 
+/// Define THREAD_DELEGATOR_VERBOSE before including this header to enable
+/// per-call diagnostic printouts.
+// #define THREAD_DELEGATOR_VERBOSE
+
 namespace traccc::cuda {
+
+#ifdef THREAD_DELEGATOR_VERBOSE
+  /// Returns a per-call osyncstream wrapping std::cout. All instances sharing
+  /// the same underlying streambuf coordinate atomically at destruction, so
+  /// each chained << expression produces interleaving-free output.
+  inline std::osyncstream syncout() { return std::osyncstream(std::cout); }
+#endif
   /// Base class for multiple implementations of a lamdba delegator.
   ///
   /// Intended use is to delegate a lambda to be executed in a single thread.
@@ -29,19 +41,42 @@ namespace traccc::cuda {
     /// Delegate a function to be executed in a single thread (or immediately, depending on the strategy). 
     /// The caller may block or suspend until the function finishes, depending on the strategy.
     virtual void delegate(std::function<void()> func)  {
+#ifdef THREAD_DELEGATOR_VERBOSE
+      const unsigned long serial = m_serial.fetch_add(1, std::memory_order_relaxed);
+      syncout() << "[null delegator #" << serial << "] executing lambda in caller thread "
+                << std::this_thread::get_id() << "\n";
+#endif
       func();
+#ifdef THREAD_DELEGATOR_VERBOSE
+      syncout() << "[null delegator #" << serial << "] finished executing lambda in caller thread "
+                << std::this_thread::get_id() << "\n";
+#endif
     }
     /// Delegate a function to be executed in a single thread (or immediately, depending on the strategy). 
     /// The caller does not block. This allow implementations of delegated callback launches during
     /// await() calls.
     virtual void delegateAsync(std::function<void()> func) {
+#ifdef THREAD_DELEGATOR_VERBOSE
+      const unsigned long serial = m_serial.fetch_add(1, std::memory_order_relaxed);
+      syncout() << "[null delegator #" << serial << "] executing async lambda in caller thread "
+                << std::this_thread::get_id() << "\n";
+#endif
       func();
+#ifdef THREAD_DELEGATOR_VERBOSE
+      syncout() << "[null delegator #" << serial << "] finished executing async lambda in caller thread "
+                << std::this_thread::get_id() << "\n";
+#endif
     }
+    // Wait for all delegated tasks to complete. Useful for tests not calling destructors. 
+    virtual void wait() {}
     virtual ~thread_delegator() = default;
     static thread_delegator& get() {
       static thread_delegator instance;
       return instance;
     }
+#ifdef THREAD_DELEGATOR_VERBOSE
+    std::atomic<unsigned long> m_serial{0};
+#endif
   };
 
   /// Synchronized variant that uses TBB task suspension instead of spinlocking.
@@ -51,9 +86,6 @@ namespace traccc::cuda {
   /// tbb::this_task::suspend and woken up by the worker task once it completes.
   /// Exceptions thrown by the lambda are captured and rethrown at the call site.
   ///
-  /// Define THREAD_DELEGATOR_VERBOSE before including this header to enable
-  /// per-call diagnostic printouts.
-#define THREAD_DELEGATOR_VERBOSE
   class tbb_arena_delegator_suspend : public thread_delegator {
     public:
     void delegate(std::function<void()> func) override {
@@ -66,19 +98,19 @@ namespace traccc::cuda {
 #endif
 
 #ifdef THREAD_DELEGATOR_VERBOSE
-      std::cout << "[tbb arena delegator #" << serial << "] outer before suspend"
+      syncout() << "[tbb arena delegator #" << serial << "] outer before suspend"
                 << " thread=" << std::this_thread::get_id() << "\n";
 #endif
 
       tbb::task::suspend([&](tbb::task::suspend_point tag) {
 #ifdef THREAD_DELEGATOR_VERBOSE
-        std::cout << "[tbb arena delegator #" << serial << "] outer lambda, about to enqueue"
+        syncout() << "[tbb arena delegator #" << serial << "] outer lambda, about to enqueue"
                   << " thread=" << std::this_thread::get_id() << "\n";
 #endif
         m_arena.enqueue([this, &func, &eptr, tag, serial]() {
           m_group.run([&func, &eptr, tag, serial]() {
 #ifdef THREAD_DELEGATOR_VERBOSE
-            std::cout << "[tbb arena delegator #" << serial << "] inner begin"
+            syncout() << "[tbb arena delegator #" << serial << "] inner begin"
                       << " thread=" << std::this_thread::get_id() << "\n";
 #endif
             try {
@@ -87,21 +119,21 @@ namespace traccc::cuda {
               eptr = std::current_exception();
             }
 #ifdef THREAD_DELEGATOR_VERBOSE
-            std::cout << "[tbb arena delegator #" << serial << "] inner end"
+            syncout() << "[tbb arena delegator #" << serial << "] inner end"
                       << " thread=" << std::this_thread::get_id() << "\n";
 #endif
             tbb::task::resume(tag);
           });
         });
 #ifdef THREAD_DELEGATOR_VERBOSE
-        std::cout << "[tbb arena delegator #" << serial << "] outer lambda, done enqueuing"
+        syncout() << "[tbb arena delegator #" << serial << "] outer lambda, done enqueuing"
                   << " thread=" << std::this_thread::get_id() << "\n";
 #endif
 
       });
 
 #ifdef THREAD_DELEGATOR_VERBOSE
-      std::cout << "[tbb arena delegator #" << serial << "] outer after resume"
+      syncout() << "[tbb arena delegator #" << serial << "] outer after resume"
                 << " thread=" << std::this_thread::get_id() << "\n";
 #endif
 
@@ -110,10 +142,27 @@ namespace traccc::cuda {
       }
     }
 
+    // The async variant swallows exceptions.
     void delegateAsync(std::function<void()> func) override {
       m_arena.enqueue([this, func](){
-          m_group.run(func);
+          m_group.run([func]() {
+              try {
+                  func();
+#ifdef THREAD_DELEGATOR_VERBOSE
+              } catch (const std::exception& e) {
+                  std::cerr << "Exception in async delegated function: " << e.what() << "\n";
+#endif
+              } catch (...) {
+#ifdef THREAD_DELEGATOR_VERBOSE
+                  std::cerr << "Unknown exception in async delegated function\n";
+#endif
+              }
+          });
       });
+    }
+
+    void wait() override {
+      m_group.wait();
     }
 
     ~tbb_arena_delegator_suspend() noexcept override {
@@ -123,7 +172,7 @@ namespace traccc::cuda {
     static tbb_arena_delegator_suspend& get() {
       static tbb_arena_delegator_suspend instance;
 #ifdef THREAD_DELEGATOR_VERBOSE
-      std::cout << "Getting single_threaded_delegator_suspend instance at address " << &instance << " in thread "
+      syncout() << "Getting single_threaded_delegator_suspend instance at address " << &instance << " in thread "
                 << std::this_thread::get_id() << "\n";
 #endif
       return instance;
@@ -161,20 +210,20 @@ namespace traccc::cuda {
 #endif
 
 #ifdef THREAD_DELEGATOR_VERBOSE
-      std::cout << "[sys thread delegator #" << serial << "] before suspend"
+      syncout() << "[sys thread delegator #" << serial << "] before suspend"
                 << " thread=" << std::this_thread::get_id() << "\n";
 #endif
 
       tbb::task::suspend([&](tbb::task::suspend_point tag) {
 #ifdef THREAD_DELEGATOR_VERBOSE
-        std::cout << "[sys thread delegator #" << serial
+        syncout() << "[sys thread delegator #" << serial
                   << "] in suspend lambda, enqueueing"
                   << " thread=" << std::this_thread::get_id() << "\n";
 #endif
         m_queue.push(
             {[&func, &eptr, serial]() {
 #ifdef THREAD_DELEGATOR_VERBOSE
-               std::cout << "[sys thread delegator #" << serial
+               syncout() << "[sys thread delegator #" << serial
                          << "] worker executing"
                          << " thread=" << std::this_thread::get_id() << "\n";
 #endif
@@ -184,21 +233,21 @@ namespace traccc::cuda {
                  eptr = std::current_exception();
                }
 #ifdef THREAD_DELEGATOR_VERBOSE
-               std::cout << "[sys thread delegator #" << serial
+               syncout() << "[sys thread delegator #" << serial
                          << "] worker done"
                          << " thread=" << std::this_thread::get_id() << "\n";
 #endif
              },
              tag});
 #ifdef THREAD_DELEGATOR_VERBOSE
-        std::cout << "[sys thread delegator #" << serial
+        syncout() << "[sys thread delegator #" << serial
                   << "] enqueued, will resume via TBB"
                   << " thread=" << std::this_thread::get_id() << "\n";
 #endif
       });
 
 #ifdef THREAD_DELEGATOR_VERBOSE
-      std::cout << "[sys thread delegator #" << serial << "] after resume"
+      syncout() << "[sys thread delegator #" << serial << "] after resume"
                 << " thread=" << std::this_thread::get_id() << "\n";
 #endif
 
@@ -214,8 +263,19 @@ namespace traccc::cuda {
     thread_delegator_suspend()
         : m_thread(&thread_delegator_suspend::workerLoop, this) {}
 
+    void wait() override {
+      // Wait until the queue is empty. This is not perfect since new tasks could be enqueued after we check, but it's sufficient for our current tests and avoids the complexity of tracking in-flight tasks.
+      while (!m_queue.empty()) {
+        std::this_thread::sleep_for(std::chrono::microseconds(500));
+      }
+    }
+
     ~thread_delegator_suspend() noexcept override {
-      m_queue.push({{}, std::nullopt});
+#ifdef THREAD_DELEGATOR_VERBOSE
+      syncout() << "Sending stop signal to worker thread."
+                << " thread=" << std::this_thread::get_id() << "\n";
+#endif
+      m_queue.push({.stop_signal = true});
       if (m_thread.joinable()) {
         m_thread.join();
       } else {
@@ -226,7 +286,7 @@ namespace traccc::cuda {
     static thread_delegator_suspend& get() {
       static thread_delegator_suspend instance;
 #ifdef THREAD_DELEGATOR_VERBOSE
-      std::cout << "Getting thread_delegator_suspend instance at address "
+      syncout() << "Getting thread_delegator_suspend instance at address "
                 << &instance << " in thread " << std::this_thread::get_id()
                 << "\n";
 #endif
@@ -247,9 +307,23 @@ namespace traccc::cuda {
         WorkItem item;
         if (m_queue.try_pop(item)) {
           if (item.stop_signal) {
+#ifdef THREAD_DELEGATOR_VERBOSE
+            syncout() << "Worker thread received stop signal, exiting."
+                      << " thread=" << std::this_thread::get_id() << "\n";
+#endif
             break;
           }
-          item.func();
+          try {
+            item.func();
+#ifdef THREAD_DELEGATOR_VERBOSE
+          } catch (const std::exception& e) {
+            std::cerr << "Exception in async delegated function: " << e.what() << "\n";
+#endif
+          } catch (...) {
+#ifdef THREAD_DELEGATOR_VERBOSE
+            std::cerr << "Unknown exception in async delegated function\n";
+#endif
+          }
           if (item.tag) {
             tbb::task::resume(*item.tag);
           }
