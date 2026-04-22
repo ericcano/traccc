@@ -375,6 +375,7 @@ def main(opts):
                 msg += ", running on devices " + ",".join(opts.cudaDevices)
             printMessage(msg)
             throughputs = []
+            point_failed = False
             for i in range(opts.repeat):
                 tryAgain = opts.tryAgain
                 while tryAgain > 0:
@@ -385,11 +386,18 @@ def main(opts):
                     except Exception as e:
                         tryAgain -= 1
                         if tryAgain == 0:
-                            raise
+                            printMessage("All retries exhausted for streams={} threads={} repeat={}, skipping this measurement point.".format(nstr, nth, i))
+                            print("--------------------")
+                            print(str(e))
+                            print("--------------------")
+                            point_failed = True
+                            break
                         print("Got exception (see below), trying again ({} times left)".format(tryAgain))
                         print("--------------------")
                         print(str(e))
                         print("--------------------")
+                if point_failed:
+                    break
 
                 if opts.dryRun:
                     continue
